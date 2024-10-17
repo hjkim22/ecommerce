@@ -38,7 +38,7 @@
     - 주문 내역을 확인할 수 있는 기능
 
 ## ERD
-> 추가 예정
+![ecommerceTest3](https://github.com/user-attachments/assets/bd525d63-4648-41d0-81a5-8fb5857d8d56)
 
 <br>
 
