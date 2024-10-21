@@ -34,7 +34,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/api/v1/members/sign-up", "/api/v1/members/sign-in") // 회원가입 및 로그인 허용
             .permitAll()                  // 위의 요청은 누구나 접근 가능
-            .anyRequest().authenticated() // 나머지 요청은 인증 필요
+//            .anyRequest().authenticated() // 나머지 요청은 인증 필요
+            .anyRequest().permitAll() // 테스트용
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // JWT 필터 추가
 
