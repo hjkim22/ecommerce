@@ -3,6 +3,7 @@ package com.ecommerce.domain.dto.member;
 import com.ecommerce.common.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,7 +35,7 @@ public class SignUpDto {
     @NotBlank
     private String address;
 
-    @NotBlank
+    @NotNull
     private Role role;
   }
 
