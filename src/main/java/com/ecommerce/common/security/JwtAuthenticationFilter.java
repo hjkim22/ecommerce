@@ -26,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = tokenProvider.resolveToken(request);
 
+    // 토큰이 존재하고 유효한 경우
     if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
       Authentication authentication = tokenProvider.getAuthentication(token);
       SecurityContextHolder.getContext().setAuthentication(authentication);
