@@ -29,6 +29,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     // DB - MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -36,6 +37,9 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // JWT
+    implementation group : 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
