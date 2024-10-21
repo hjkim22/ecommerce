@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### .env 추가 ###
+.env
+
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/java,intellij,macos,gradle

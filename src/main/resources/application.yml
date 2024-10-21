@@ -1,0 +1,37 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+
+  application:
+    name: ecommerce
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:${MYSQL_PORT}/ecommerce
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update # 배포 할때 validate / none 변경 예정
+    show-sql: true
+    database: mysql
+
+  jwt:
+    secret: ${SECRET_KEY}
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
