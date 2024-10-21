@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -51,7 +52,7 @@ public class MemberEntity extends BaseTimeEntity implements UserDetails {
   @NotBlank
   private String address;
 
-  @NotBlank
+  @NotNull
   @Enumerated(EnumType.STRING)
   private Role role;
 
