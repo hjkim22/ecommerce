@@ -26,7 +26,7 @@ public class MemberUpdateDto {
 
   @NotBlank
   @Column(unique = true)
-  private String phone;
+  private String phoneNumber;
 
   @NotBlank
   private String address;

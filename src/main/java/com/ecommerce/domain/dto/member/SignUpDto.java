@@ -29,7 +29,7 @@ public class SignUpDto {
     private String name;
 
     @NotBlank
-    private String phone;
+    private String phoneNumber;
 
     @NotBlank
     private String address;
