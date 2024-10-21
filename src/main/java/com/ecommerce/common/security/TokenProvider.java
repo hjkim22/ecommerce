@@ -22,70 +22,90 @@ import org.springframework.stereotype.Component;
 public class TokenProvider {
 
   private static final String KEY_ROLES = "roles";
-  private static final long TOKEN_EXPIRE_TIME = 1000 * 60 * 60;
+  private static final long TOKEN_EXPIRE_TIME = 1000 * 60 * 60; // 1시간
 
   @Value("${spring.jwt.secret}")
   private String secretKey;
 
-  // JWT 토큰 생성
+  /**
+   * JWT 토큰 생성
+   * @param email 사용자 이메일
+   * @param role 사용자 역할
+   * @return 생성된 JWT 토큰
+   */
   public String generateToken(String email, Role role) {
     return Jwts.builder()
-        .setSubject(email)
-        .claim(KEY_ROLES, role.name())
+        .setSubject(email) // 토큰 주체(이메일) 설정
+        .claim(KEY_ROLES, role.name()) // 사용자 역할에 클레임 추가
         .setIssuedAt(new Date())
         .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME))
         .signWith(SignatureAlgorithm.HS256, this.secretKey)
         .compact();
   }
 
-  // 토큰에서 인증 정보 추출
+  /**
+   * JWT 토큰에서 인증 정보 추출
+   * @param token JWT 토큰
+   * @return 인증 정보
+   */
   public Authentication getAuthentication(String token) {
-    String email = getUserEmailFromToken(token);
-    // 토큰에서 역할 정보를 추출하여 Role enum 으로 변환
-    Role role = Role.valueOf(parseClaims(token).get(KEY_ROLES).toString());
+    String email = getUserEmailFromToken(token); // 토큰에서 이메일 추출
+    Role role = Role.valueOf(parseClaims(token).get(KEY_ROLES).toString()); // 토큰에서 역할 추출
 
-    // 역할 정보를 기반으로 사용자 권한을 설정 (SimpleGrantedAuthority 는 스프링 시큐리티에서 권한을 나타냄)
     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role.name());
-
     // 스프링 시큐리티의 User 객체 생성 (여기서는 비밀번호는 빈 값으로 설정)
     User principal = new User(email, "", Collections.singletonList(authority));
+
     // UsernamePasswordAuthenticationToken 객체를 생성하여 인증 정보를 반환
     return new UsernamePasswordAuthenticationToken(principal, token,
         Collections.singletonList(authority));
   }
 
-  // JWT 토큰에서 subject(사용자 이메일) 추출
+  /**
+   * JWT 토큰에서 사용자 이메일 추출
+   * @param token JWT 토큰
+   * @return 사용자 이메일
+   */
   public String getUserEmailFromToken(String token) {
-    return parseClaims(token).getSubject();
+    return parseClaims(token).getSubject(); // 토큰에서 주체(이메일) 추출
   }
 
-  // JWT 토큰의 유효성을 검사 (만료 여부 등)
+  /**
+   * JWT 토큰 유효성 검사
+   * @param token JWT 토큰
+   * @return boolean 값
+   */
   public boolean validateToken(String token) {
     try {
-      // 토큰의 클레임을 파싱하여 만료 시간이 현재 시간보다 이후인지 확인
       Claims claims = parseClaims(token);
-      return !claims.getExpiration().before(new Date());
+      return !claims.getExpiration().before(new Date()); // 만료 여부 확인
     } catch (Exception e) {
-      // 예외 발생 시 (토큰이 유효하지 않으면) false 반환
       log.error("Invalid JWT token: {}", e.getMessage());
       return false;
     }
   }
 
-  // JWT 토큰에서 클레임을 파싱하여 반환
+  /**
+   * JWT 토큰에서 클레임 파싱 후 반환
+   * @param token JWT 토큰
+   * @return 파싱된 클레임
+   */
   private Claims parseClaims(String token) {
     return Jwts.parser()
         .setSigningKey(this.secretKey)
         .parseClaimsJws(token)
-        .getBody();
+        .getBody(); // 클레임 본문 반환
   }
 
-  // 요청에서 토큰 추출
-  // HTTP 요청 헤더에서 "Authorization" 헤더에 있는 JWT 토큰을 추출
+  /**
+   * HTTP 요청에서 JWT 토큰 추출
+   * @param request HTTP 요청
+   * @return JWT 토큰, 없으면 null
+   */
   public String resolveToken(HttpServletRequest request) {
     String bearerToken = request.getHeader("Authorization");
     if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-      return bearerToken.substring(7); // "Bearer "를 제거하고 토큰 값만 반환
+      return bearerToken.substring(7); // "Bearer " 부분 제거하고 토큰 값만 반환
     }
     return null;
   }
