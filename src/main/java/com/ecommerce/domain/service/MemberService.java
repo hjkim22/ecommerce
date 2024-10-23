@@ -10,6 +10,7 @@ import com.ecommerce.domain.dto.member.SignUpDto;
 import com.ecommerce.domain.dto.member.SignUpDto.Request;
 import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.repository.MemberRepository;
+import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -99,6 +100,17 @@ public class MemberService {
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     return MemberDto.fromEntity(member);
+  }
+
+  /**
+   * 전체 회원 조회
+   * @return 전체 회원 정보 리스트 DTO
+   */
+  public List<MemberDto> findAllMembers() {
+    List<MemberEntity> members = memberRepository.findAll();
+    return members.stream()
+        .map(MemberDto::fromEntity)
+        .toList();
   }
 
   /**

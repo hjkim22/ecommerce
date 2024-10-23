@@ -8,6 +8,7 @@ import com.ecommerce.domain.dto.member.SignInDto;
 import com.ecommerce.domain.dto.member.SignUpDto;
 import com.ecommerce.domain.service.MemberService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +59,13 @@ public class MemberController {
   public ResponseEntity<MemberDto> getMemberByEmail(@PathVariable("email") String email) {
     log.info("회원 정보 조회 요청 - 이메일: {}", email);
     return ResponseEntity.ok(memberService.getMemberByEmail(email));
+  }
+
+  // 전체 회원 조회
+  @GetMapping
+  public ResponseEntity<List<MemberDto>> getAllMembers() {
+    log.info("전체 회원 조회 요청");
+    return ResponseEntity.ok(memberService.findAllMembers());
   }
 
   // 업데이트
