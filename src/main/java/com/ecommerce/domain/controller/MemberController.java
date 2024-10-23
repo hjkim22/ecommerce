@@ -31,32 +31,32 @@ public class MemberController {
   // 회원가입
   @PostMapping("/sign-up")
   public ResponseEntity<SignUpDto.Response> signUp(@Valid @RequestBody SignUpDto.Request request) {
-    log.info("Sign-up request for email: {}", request.getEmail());
+    log.info("회원가입 요청 - 이메일: {}", request.getEmail());
     SignUpDto.Response newMember = memberService.signUp(request);
-    log.info("Sign-up successful for email: {}", newMember.getEmail());
+    log.info("회원가입 성공 - 이메일: {}", newMember.getEmail());
     return ResponseEntity.status(CREATED).body(newMember);
   }
 
   // 로그인
   @PostMapping("/sign-in")
   public ResponseEntity<SignInDto.Response> signIn(@Valid @RequestBody SignInDto.Request request) {
-    log.info("Sign-in request for email: {}", request.getEmail());
+    log.info("로그인 요청 - 이메일: {}", request.getEmail());
     SignInDto.Response newMember = memberService.signIn(request); // 로그인 서비스에서 토큰을 포함한 응답 받음
-    log.info("Sign-in successful for email: {}", newMember.getEmail());
+    log.info("로그인 성공 - 이메일: {}", newMember.getEmail());
     return ResponseEntity.ok(newMember); // 로그인 성공 시 JWT 토큰과 이메일을 포함한 응답 반환
   }
 
   // 회원조회 id
   @GetMapping("/{memberId}")
   public ResponseEntity<MemberDto> getMemberById(@PathVariable("memberId") Long memberId) {
-    log.info("Fetching member by ID: {}", memberId);
+    log.info("회원 정보 조회 요청 - ID: {}", memberId);
     return ResponseEntity.ok(memberService.getMemberById(memberId));
   }
 
   // 회원조회 email
   @GetMapping("/email/{email}") // id 와 url 충돌방지
   public ResponseEntity<MemberDto> getMemberByEmail(@PathVariable("email") String email) {
-    log.info("Fetching member by email: {}", email);
+    log.info("회원 정보 조회 요청 - 이메일: {}", email);
     return ResponseEntity.ok(memberService.getMemberByEmail(email));
   }
 
@@ -65,16 +65,14 @@ public class MemberController {
   public ResponseEntity<MemberDto> updateMember(
       @PathVariable("memberId") Long memberId,
       @Valid @RequestBody MemberUpdateDto request) {
-
-    log.info("Updating member with ID: {}", memberId);
+    log.info("회원 정보 업데이트 요청 - ID: {}", memberId);
     return ResponseEntity.ok(memberService.updateMember(memberId, request));
   }
 
   // 삭제
   @DeleteMapping("/{memberId}")
   public ResponseEntity<Void> deleteMember(@PathVariable Long memberId) {
-    log.info("Deleting member with ID: {}", memberId);
-
+    log.info("회원 삭제 요청 - ID: {}", memberId);
     memberService.deleteMember(memberId);
     return ResponseEntity.noContent().build();
   }
