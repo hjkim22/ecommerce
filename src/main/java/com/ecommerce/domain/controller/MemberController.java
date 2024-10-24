@@ -8,6 +8,7 @@ import com.ecommerce.domain.dto.member.SignInDto;
 import com.ecommerce.domain.dto.member.SignUpDto;
 import com.ecommerce.domain.service.MemberService;
 import jakarta.validation.Valid;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -61,11 +63,13 @@ public class MemberController {
     return ResponseEntity.ok(memberService.getMemberByEmail(email));
   }
 
-  // 전체 회원 조회
-  @GetMapping
-  public ResponseEntity<List<MemberDto>> getAllMembers() {
-    log.info("전체 회원 조회 요청");
-    return ResponseEntity.ok(memberService.findAllMembers());
+  // 최근 가입된 회원 조회
+  @GetMapping("/recent")
+  public ResponseEntity<List<MemberDto>> getRecentMembers(
+      @RequestParam(defaultValue = "10") int limit) {
+    log.info("최근 가입된 회원 조회 요청 - {}", limit);
+    List<MemberDto> recentMembers = memberService.findRecentMembers(limit);
+    return ResponseEntity.ok(recentMembers);
   }
 
   // 업데이트

@@ -12,8 +12,11 @@ import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.repository.MemberRepository;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -89,12 +92,21 @@ public class MemberService {
   }
 
   /**
-   * 전체 회원 조회
-   * @return 전체 회원 정보 리스트 DTO
+   * 최근 가입한 회원 조회
+   * @param limit 조회할 회원 수
+   * @return 최근 가입한 회원 정보 리스트 DTO
    */
-  public List<MemberDto> findAllMembers() {
-    List<MemberEntity> members = memberRepository.findAll();
-    return members.stream()
+  public List<MemberDto> findRecentMembers(int limit) {
+    final int MAX_LIMIT = 50;
+    if (limit > MAX_LIMIT) {
+      log.warn("요청한 limit {}는 최대 {}를 초과하여 기본값 10으로 설정합니다.", limit, MAX_LIMIT);
+      limit = 10; // 기본값으로 대체
+    }
+
+    Pageable pageable = PageRequest.of(0, limit);
+    List<MemberEntity> recentMembers = memberRepository.findAllByOrderByCreatedAtDesc(pageable);
+    log.info("최근 가입한 회원 {}명 조회", recentMembers.size());
+    return recentMembers.stream()
         .map(MemberDto::fromEntity)
         .toList();
   }
