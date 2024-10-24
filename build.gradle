@@ -41,6 +41,10 @@ dependencies {
     // JWT
     implementation group : 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
 
+    // JAXB API
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
