@@ -12,13 +12,13 @@ import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.repository.MemberRepository;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +34,7 @@ public class MemberService {
    * @param request 회원가입 요청 DTO
    * @return 회원가입 성공 응답 DTO
    */
+  @Transactional
   public SignUpDto.Response signUp(SignUpDto.Request request) {
     if (memberRepository.existsByEmail(request.getEmail())) {
       throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -117,6 +118,7 @@ public class MemberService {
    * @param request 업데이트 요청 DTO
    * @return 업데이트된 회원 정보 DTO
    */
+  @Transactional
   public MemberDto updateMember(Long id, MemberUpdateDto request) {
     MemberEntity member = memberRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -135,13 +137,14 @@ public class MemberService {
     member.setAddress(request.getAddress());
 
     log.info("회원 정보 업데이트 성공 - ID: {}", id);
-    return MemberDto.fromEntity(memberRepository.save(member));
+    return MemberDto.fromEntity(member);
   }
 
   /**
    * 회원 삭제
    * @param id 회원 ID
    */
+  @Transactional
   public void deleteMember(Long id) {
     if (!memberRepository.existsById(id)) {
       throw new CustomException(ErrorCode.USER_NOT_FOUND);
