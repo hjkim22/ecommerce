@@ -32,17 +32,13 @@ public class MemberService {
    * @return 회원가입 성공 응답 DTO
    */
   public SignUpDto.Response signUp(SignUpDto.Request request) {
-    log.info("회원가입 요청: {}", request.getEmail());
     if (memberRepository.existsByEmail(request.getEmail())) {
-      log.warn("회원가입-이미 존재하는 이메일: {}", request.getEmail());
       throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
     if (memberRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-      log.warn("회원가입-이미 존재하는 전화번호: {}", request.getPhoneNumber());
       throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
     }
     if (request.getPassword().length() < 6) { // 비밀번호 길이 확인
-      log.warn("6자리 미만의 비밀번호: {}", request.getPassword());
       throw new CustomException(ErrorCode.SHORT_PASSWORD);
     }
 
@@ -58,22 +54,15 @@ public class MemberService {
    * @return 로그인 성공 응답 DTO
    */
   public SignInDto.Response signIn(SignInDto.Request request) {
-    log.info("로그인 시도: {}", request.getEmail());
-
     MemberEntity member = memberRepository.findByEmail(request.getEmail())
-        .orElseThrow(() -> {
-          log.warn("로그인 실패 - 사용자 없음: {}", request.getEmail());
-          return new CustomException(ErrorCode.USER_NOT_FOUND);
-        });
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
-      log.warn("로그인 실패 - 비밀번호 불일치: {}", request.getEmail());
       throw new CustomException(ErrorCode.INVALID_PASSWORD);
     }
 
     // 토큰 생성
     String token = tokenProvider.generateToken(member.getEmail(), member.getRole());
-    log.info("로그인 성공: {}", member.getEmail());
 
     return new SignInDto.Response(token, member.getEmail(), "로그인 성공");
   }
@@ -120,21 +109,16 @@ public class MemberService {
    * @return 업데이트된 회원 정보 DTO
    */
   public MemberDto updateMember(Long id, MemberUpdateDto request) {
-    log.info("회원 정보 업데이트 요청 - ID: {}, 이메일: {}", id, request.getEmail());
-
     MemberEntity member = memberRepository.findById(id)
         .orElseThrow(() -> {
-          log.warn("업데이트 실패 - 사용자 없음: {}", id);
           return new CustomException(ErrorCode.USER_NOT_FOUND);
         });
 
     if (memberRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
-      log.warn("이미 존재하는 이메일: {}", request.getEmail());
       throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
 
     if (memberRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), id)) {
-      log.warn("이미 존재하는 전화번호: {}", request.getPhoneNumber());
       throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
     }
 
@@ -152,10 +136,7 @@ public class MemberService {
    * @param id 회원 ID
    */
   public void deleteMember(Long id) {
-    log.info("회원 삭제 요청 - ID: {}", id);
-
     if (!memberRepository.existsById(id)) {
-      log.warn("삭제 실패 - 사용자 없음: {}", id);
       throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
     memberRepository.deleteById(id);
