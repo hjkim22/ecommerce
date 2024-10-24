@@ -123,15 +123,10 @@ public class MemberService {
     MemberEntity member = memberRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    if (memberRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
-      throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
-    }
-
     if (memberRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), id)) {
       throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
     }
 
-    member.setEmail(request.getEmail());
     member.setName(request.getName());
     member.setPhoneNumber(request.getPhoneNumber());
     member.setAddress(request.getAddress());
