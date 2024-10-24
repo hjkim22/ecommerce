@@ -16,18 +16,17 @@ import lombok.Setter;
 @AllArgsConstructor
 public class MemberUpdateDto {
 
-  @NotBlank
-  @Email
-  @Column(unique = true)
+  @NotBlank(message = "이메일을 입력해주세요.")
+  @Email(message = "유효한 이메일 주소를 입력해주세요.")
   private String email;
 
-  @NotBlank
+  @NotBlank(message = "이름을 입력해주세요..")
   private String name;
 
-  @NotBlank
+  @NotBlank(message = "전화번호를 입력해주세요.")
   @Column(unique = true)
   private String phoneNumber;
 
-  @NotBlank
+  @NotBlank(message = "주소를 입력해주세요.")
   private String address;
 }

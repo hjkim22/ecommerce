@@ -38,9 +38,6 @@ public class MemberService {
     if (memberRepository.existsByPhoneNumber(request.getPhoneNumber())) {
       throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
     }
-    if (request.getPassword().length() < 6) { // 비밀번호 길이 확인
-      throw new CustomException(ErrorCode.SHORT_PASSWORD);
-    }
 
     String encodedPassword = passwordEncoder.encode(request.getPassword());
     MemberEntity savedMember = createMember(request, encodedPassword);
@@ -110,9 +107,7 @@ public class MemberService {
    */
   public MemberDto updateMember(Long id, MemberUpdateDto request) {
     MemberEntity member = memberRepository.findById(id)
-        .orElseThrow(() -> {
-          return new CustomException(ErrorCode.USER_NOT_FOUND);
-        });
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     if (memberRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
       throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
