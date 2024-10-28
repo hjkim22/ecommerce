@@ -13,7 +13,8 @@ public enum ErrorCode {
   INVALID_PASSWORD(HttpStatus.UNAUTHORIZED.value(), "비밀번호가 일치하지 않습니다."),
   EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT.value(), "이미 등록된 이메일입니다."),
   PHONE_NUMBER_ALREADY_EXISTS(HttpStatus.CONFLICT.value(), "이미 등록된 전화번호입니다."),
-  SHORT_PASSWORD(HttpStatus.BAD_REQUEST.value(), "비밀번호는 6자 이상이어야 합니다.");
+  SHORT_PASSWORD(HttpStatus.BAD_REQUEST.value(), "비밀번호는 6자 이상이어야 합니다."),
+  INVALID_ROLE(HttpStatus.BAD_REQUEST.value(), "유효하지 않은 역할입니다. 'CUSTOMER' 또는 'SELLER' 만 입력 가능합니다.");
 
   private final int statusCode;     // Http 상태 코드
   private final String description; // 오류 설명

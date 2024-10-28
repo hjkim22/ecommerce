@@ -1,7 +1,6 @@
 package com.ecommerce.domain.dto.member;
 
 import jakarta.persistence.Column;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,18 +15,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class MemberUpdateDto {
 
-  @NotBlank
-  @Email
-  @Column(unique = true)
-  private String email;
-
-  @NotBlank
+  @NotBlank(message = "이름을 입력해주세요..")
   private String name;
 
-  @NotBlank
+  @NotBlank(message = "전화번호를 입력해주세요.")
   @Column(unique = true)
   private String phoneNumber;
 
-  @NotBlank
+  @NotBlank(message = "주소를 입력해주세요.")
   private String address;
 }

@@ -30,9 +30,9 @@ public class GlobalExceptionHandler {
 
   // 유효성 검사에서 실패 시
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-    String errorMessage = "Validation failed: " + Objects.requireNonNull(ex.getFieldError()).getDefaultMessage();
-    ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), errorMessage);
-    return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+  public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException e) {
+    String errorMessage = "Validation failed: " + Objects.requireNonNull(e.getFieldError()).getDefaultMessage();
+    ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), errorMessage);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
   }
 }
