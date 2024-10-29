@@ -61,9 +61,9 @@ public class TokenProvider {
   }
 
   /**
-   * JWT 토큰에서 사용자 이메일 추출
+   * JWT 토큰에서 사용자 ID 추출
    * @param token JWT 토큰
-   * @return 사용자 이메일
+   * @return 사용자 ID
    */
   public Long extractUserIdFromToken(String token) {
     return Long.valueOf(getClaims(token).get(CLAIM_USER_ID).toString());
