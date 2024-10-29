@@ -5,8 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -24,16 +23,14 @@ public class RedisConfig {
   }
 
   @Bean
-  public RedisTemplate<String, Object> redisTemplate() {
-    RedisTemplate<String, Object> template = new RedisTemplate<>();
+  public StringRedisTemplate redisTemplate() {
+    StringRedisTemplate template = new StringRedisTemplate();
 
     template.setConnectionFactory(redisConnectionFactory());
 
-    // Key, Value 직렬화기 설정
+    // Key 직렬화기 설정
     template.setKeySerializer(new StringRedisSerializer());
-    template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-    template.setHashKeySerializer(new StringRedisSerializer());
-    template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+    // Value 직렬화기는 StringRedisTemplate 이 String 값을 다루기 때문에 설정할 필요 없음
 
     return template;
   }
