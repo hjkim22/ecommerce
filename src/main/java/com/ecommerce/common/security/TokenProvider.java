@@ -21,7 +21,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TokenProvider {
 
-  private static final String KEY_ROLES = "roles";
+  private static final String CLAIM_ROLES = "roles";
+  private static final String CLAIM_USER_ID = "userId";
   private static final long TOKEN_EXPIRE_TIME = 1000 * 60 * 60; // 1시간
 
   @Value("${spring.jwt.secret}")
@@ -29,14 +30,14 @@ public class TokenProvider {
 
   /**
    * JWT 토큰 생성
-   * @param email 사용자 이메일
+   * @param userId 사용자 고유 ID
    * @param role 사용자 역할
    * @return 생성된 JWT 토큰
    */
-  public String generateToken(String email, Role role) {
+  public String createToken(Long userId, Role role) {
     return Jwts.builder()
-        .setSubject(email) // 토큰 주체(이메일) 설정
-        .claim(KEY_ROLES, role.name()) // 사용자 역할에 클레임 추가
+        .claim(CLAIM_USER_ID, userId) // 사용자 ID를 클레임에 포함
+        .claim(CLAIM_ROLES, role)     // 사용자 역할을 클레임에 포함
         .setIssuedAt(new Date())
         .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME))
         .signWith(SignatureAlgorithm.HS256, this.secretKey)
@@ -49,16 +50,14 @@ public class TokenProvider {
    * @return 인증 정보
    */
   public Authentication getAuthentication(String token) {
-    String email = getUserEmailFromToken(token); // 토큰에서 이메일 추출
-    Role role = Role.valueOf(parseClaims(token).get(KEY_ROLES).toString()); // 토큰에서 역할 추출
+    Long userID = extractUserIdFromToken(token); // 토큰에서 이메일 추출
+    Role role = Role.valueOf(getClaims(token).get(CLAIM_ROLES).toString()); // 토큰에서 역할 추출
 
-    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role.name());
-    // 스프링 시큐리티의 User 객체 생성 (여기서는 비밀번호는 빈 값으로 설정)
-    User principal = new User(email, "", Collections.singletonList(authority));
+    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role.name()); // 역할을 권한으로 변환
+    User principal = new User(userID.toString(), "", Collections.singletonList(authority));
 
-    // UsernamePasswordAuthenticationToken 객체를 생성하여 인증 정보를 반환
     return new UsernamePasswordAuthenticationToken(principal, token,
-        Collections.singletonList(authority));
+        Collections.singletonList(authority)); // 사용자 및 권한을 포함한 인증 정보 반환
   }
 
   /**
@@ -66,8 +65,8 @@ public class TokenProvider {
    * @param token JWT 토큰
    * @return 사용자 이메일
    */
-  public String getUserEmailFromToken(String token) {
-    return parseClaims(token).getSubject(); // 토큰에서 주체(이메일) 추출
+  public Long extractUserIdFromToken(String token) {
+    return Long.valueOf(getClaims(token).get(CLAIM_USER_ID).toString());
   }
 
   /**
@@ -75,12 +74,12 @@ public class TokenProvider {
    * @param token JWT 토큰
    * @return boolean 값
    */
-  public boolean validateToken(String token) {
+  public boolean isValidToken(String token) {
     try {
-      Claims claims = parseClaims(token);
+      Claims claims = getClaims(token);
       return !claims.getExpiration().before(new Date()); // 만료 여부 확인
     } catch (Exception e) {
-      log.error("Invalid JWT token: {}", e.getMessage());
+      log.error("Invalid JWT token: {}, cause: {}", token, e.getMessage());
       return false;
     }
   }
@@ -90,9 +89,9 @@ public class TokenProvider {
    * @param token JWT 토큰
    * @return 파싱된 클레임
    */
-  private Claims parseClaims(String token) {
+  private Claims getClaims(String token) {
     return Jwts.parser()
-        .setSigningKey(this.secretKey)
+        .setSigningKey(secretKey)
         .parseClaimsJws(token)
         .getBody(); // 클레임 본문 반환
   }
@@ -102,7 +101,7 @@ public class TokenProvider {
    * @param request HTTP 요청
    * @return JWT 토큰, 없으면 null
    */
-  public String resolveToken(HttpServletRequest request) {
+  public String extractToken(HttpServletRequest request) {
     String bearerToken = request.getHeader("Authorization");
     if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
       return bearerToken.substring(7); // "Bearer " 부분 제거하고 토큰 값만 반환
