@@ -50,7 +50,7 @@ public class TokenProvider {
    * @return 인증 정보
    */
   public Authentication getAuthentication(String token) {
-    Long userID = extractUserIdFromToken(token); // 토큰에서 이메일 추출
+    Long userID = extractUserIdFromToken(token); // 토큰에서 ID 추출
     Role role = Role.valueOf(getClaims(token).get(CLAIM_ROLES).toString()); // 토큰에서 역할 추출
 
     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role.name()); // 역할을 권한으로 변환
