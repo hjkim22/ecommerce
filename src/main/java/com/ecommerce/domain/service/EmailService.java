@@ -22,6 +22,7 @@ public class EmailService {
 
   private final JavaMailSender mailSender; // 이메일 발송을 위한 JavaMailSender
   private final RedisUtil redisUtil;
+  private static final long VERIFICATION_CODE_EXPIRATION_TIME = 180L;
 
   /**
    * 인증 코드 생성
@@ -82,7 +83,7 @@ public class EmailService {
    */
   private void cacheVerificationCode(String verificationCode, String email) {
     String cacheKey = "email_verification:" + verificationCode; // Redis 키 형식 통일
-    redisUtil.setData(cacheKey, email, 180L); // 3분 후 만료
+    redisUtil.setData(cacheKey, email, VERIFICATION_CODE_EXPIRATION_TIME); // 3분 후 만료
   }
 
   /**
