@@ -50,7 +50,6 @@ public class EmailService {
         + "</body>"
         + "</html>";
 
-    log.info("이메일 전송 중: {}", email);
     sendHtmlEmail(email, title, content);
     cacheVerificationCode(verificationCode, email);
   }
@@ -70,7 +69,6 @@ public class EmailService {
       helper.setSubject(title);
       helper.setText(content, true); // 내용을 HTML 로 설정
       mailSender.send(message);
-      log.info("이메일 전송 성공");
     } catch (MessagingException e) {
       log.error("이메일 전송 실패: {}", e.getMessage());
       throw new RuntimeException("이메일 전송 실패", e);
@@ -85,7 +83,6 @@ public class EmailService {
   private void cacheVerificationCode(String verificationCode, String email) {
     String cacheKey = "email_verification:" + verificationCode; // Redis 키 형식 통일
     redisUtil.setData(cacheKey, email, 180L); // 3분 후 만료
-    log.info("인증 번호 캐시 저장: {}", verificationCode);
   }
 
   /**
@@ -106,6 +103,6 @@ public class EmailService {
       throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
     }
 
-    log.info("인증 코드 검증 성공: {}", emailVerificationDto.getVerificationCode());
+    log.info("인증 코드 검증 성공");
   }
 }

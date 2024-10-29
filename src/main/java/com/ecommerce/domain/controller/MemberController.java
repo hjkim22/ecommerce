@@ -2,10 +2,13 @@ package com.ecommerce.domain.controller;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
+import com.ecommerce.domain.dto.email.EmailVerificationDto;
+import com.ecommerce.domain.dto.email.EmailVerificationRequestDto;
 import com.ecommerce.domain.dto.member.MemberDto;
 import com.ecommerce.domain.dto.member.MemberUpdateDto;
 import com.ecommerce.domain.dto.member.SignInDto;
 import com.ecommerce.domain.dto.member.SignUpDto;
+import com.ecommerce.domain.service.EmailService;
 import com.ecommerce.domain.service.MemberService;
 import jakarta.validation.Valid;
 import java.util.Collections;
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
   private final MemberService memberService;
+  private final EmailService emailService;
 
   // 회원가입
   @PostMapping("/sign-up")
@@ -47,6 +51,24 @@ public class MemberController {
     SignInDto.Response newMember = memberService.signIn(request); // 로그인 서비스에서 토큰을 포함한 응답 받음
     log.info("로그인 성공 - 이메일: {}", newMember.getEmail());
     return ResponseEntity.ok(newMember); // 로그인 성공 시 JWT 토큰과 이메일을 포함한 응답 반환
+  }
+
+  // 인증 메일 전송
+  @PostMapping("/verification-code/send")
+  public ResponseEntity<Void> sendEmail(@RequestBody @Valid EmailVerificationRequestDto request) {
+    log.info("인증 메일 전송 요청 - 이메일: {}", request.email());
+    emailService.sendEmailVerification(request.email());
+    log.info("인증 메일 전송 완료");
+    return ResponseEntity.noContent().build();
+  }
+
+  // 인증번호 확인
+  @PostMapping("/verification-code/verify")
+  public ResponseEntity<Void> verifyEmailCode(@RequestBody @Valid EmailVerificationDto request) {
+    log.info("인증번호 확인 요청 - 인증 코드: {}", request.getVerificationCode());
+    emailService.validateVerificationCode(request);
+    log.info("인증번호 확인 성공");
+    return ResponseEntity.ok().build();
   }
 
   // 회원조회 id
