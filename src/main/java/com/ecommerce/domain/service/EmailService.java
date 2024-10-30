@@ -2,8 +2,8 @@ package com.ecommerce.domain.service;
 
 import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.exception.CustomException;
-import com.ecommerce.domain.repository.RedisCacheRepository;
 import com.ecommerce.domain.dto.email.EmailVerificationDto;
+import com.ecommerce.domain.repository.RedisCacheRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Random;
@@ -61,7 +61,8 @@ public class EmailService {
    * @param title 제목
    * @param content 내용
    */
-  public void sendHtmlEmail(String toEmail, String title, String content) {
+  public void sendHtmlEmail(String toEmail, String title, String content)
+      throws MessagingException {
     MimeMessage message = mailSender.createMimeMessage();
 
     try {
@@ -72,7 +73,7 @@ public class EmailService {
       mailSender.send(message);
     } catch (MessagingException e) {
       log.error("이메일 전송 실패: {}", e.getMessage());
-      throw new RuntimeException("이메일 전송 실패", e);
+      throw e;
     }
   }
 
