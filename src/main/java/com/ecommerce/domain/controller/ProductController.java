@@ -13,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,10 +27,9 @@ public class ProductController {
   @PostMapping("/create")
   public ResponseEntity<ProductCreateDto.Response> createProduct(
       @Valid @RequestBody ProductCreateDto.Request request,
-      @RequestParam Long sellerId,
       HttpServletRequest httpServletRequest) {
 
-    ProductCreateDto.Response newProduct = productService.createProduct(request, sellerId,
+    ProductCreateDto.Response newProduct = productService.createProduct(request,
         httpServletRequest);
     return ResponseEntity.status(CREATED).body(newProduct);
   }

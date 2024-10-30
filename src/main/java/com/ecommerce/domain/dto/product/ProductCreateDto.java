@@ -39,6 +39,9 @@ public class ProductCreateDto {
 
     @Enumerated(EnumType.STRING)
     private ProductStatus status = ProductStatus.AVAILABLE;
+
+    @NotNull
+    private Long sellerId;
   }
 
   @Getter
@@ -48,6 +51,7 @@ public class ProductCreateDto {
   @AllArgsConstructor
   public static class Response {
 
+    private Long productId;
     private String productName;
     private String message;
   }

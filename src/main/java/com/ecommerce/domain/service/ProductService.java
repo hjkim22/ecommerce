@@ -22,13 +22,14 @@ public class ProductService {
   private final TokenProvider tokenProvider;
 
   // 상품 등록
-  public ProductCreateDto.Response createProduct(ProductCreateDto.Request request, Long sellerId,
+  public ProductCreateDto.Response createProduct(ProductCreateDto.Request request,
       HttpServletRequest httpServletRequest) {
-    Long userId = validateTokenAndExtractUserId(httpServletRequest);
-    MemberEntity seller = validateSeller(sellerId, userId);
+    String token = tokenProvider.extractToken(httpServletRequest);
+    Long userId = validateTokenAndExtractUserId(token);
+    MemberEntity seller = validateSeller(request.getSellerId(), userId);
     ProductEntity product = createProductEntityFromDto(request, seller);
 
-    return new ProductCreateDto.Response(product.getProductName(), "상품 등록 완료");
+    return new ProductCreateDto.Response(product.getId(), product.getProductName(), "상품 등록 완료");
   }
 
   // 상품 조회(id)
@@ -39,10 +40,8 @@ public class ProductService {
   // 상품 삭제
 
   // 토큰 검증, id 추출
-  private Long validateTokenAndExtractUserId(HttpServletRequest httpServletRequest) {
-    String token = tokenProvider.extractToken(httpServletRequest);
-
-    if (!tokenProvider.isValidToken(token)) {
+  private Long validateTokenAndExtractUserId(String token) {
+    if (token == null || !tokenProvider.isValidToken(token)) {
       throw new CustomException(ErrorCode.INVALID_TOKEN);
     }
 
