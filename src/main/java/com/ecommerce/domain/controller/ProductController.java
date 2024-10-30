@@ -24,7 +24,7 @@ public class ProductController {
 
   private final ProductService productService;
 
-  @PreAuthorize("hasRole('SELLER')")
+  @PreAuthorize("hasRole('ROLE_SELLER')")
   @PostMapping("/create")
   public ResponseEntity<ProductCreateDto.Response> createProduct(
       @Valid @RequestBody ProductCreateDto.Request request,
