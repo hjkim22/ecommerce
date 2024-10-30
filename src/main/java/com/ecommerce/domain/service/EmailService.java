@@ -2,7 +2,7 @@ package com.ecommerce.domain.service;
 
 import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.exception.CustomException;
-import com.ecommerce.common.util.RedisUtil;
+import com.ecommerce.domain.repository.RedisCacheRepository;
 import com.ecommerce.domain.dto.email.EmailVerificationDto;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmailService {
 
   private final JavaMailSender mailSender; // 이메일 발송을 위한 JavaMailSender
-  private final RedisUtil redisUtil;
+  private final RedisCacheRepository redisUtil;
   private static final long VERIFICATION_CODE_EXPIRATION_TIME = 180L;
 
   /**

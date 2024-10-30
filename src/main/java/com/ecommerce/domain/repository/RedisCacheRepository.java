@@ -1,4 +1,4 @@
-package com.ecommerce.common.util;
+package com.ecommerce.domain.repository;
 
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class RedisUtil {
+public class RedisCacheRepository {
 
   // Redis 에서 모든 데이터 String 으로 저장하고 조회하기 위해 StringRedisTemplate 사용
   private final StringRedisTemplate redisTemplate;
