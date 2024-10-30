@@ -63,7 +63,7 @@ public class MemberService {
     }
 
     // 토큰 생성
-    String token = tokenProvider.generateToken(member.getEmail(), member.getRole());
+    String token = tokenProvider.createToken(member.getId(), member.getRole());
 
     return new SignInDto.Response(token, member.getEmail(), "로그인 성공");
   }

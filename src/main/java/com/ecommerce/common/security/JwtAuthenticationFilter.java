@@ -24,10 +24,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
 
-    String token = tokenProvider.resolveToken(request);
+    String token = tokenProvider.extractToken(request);
 
     // 토큰이 존재하고 유효한 경우
-    if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
+    if (StringUtils.hasText(token) && tokenProvider.isValidToken(token)) {
       Authentication authentication = tokenProvider.getAuthentication(token);
       SecurityContextHolder.getContext().setAuthentication(authentication);
     }
