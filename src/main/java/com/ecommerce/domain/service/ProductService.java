@@ -1,7 +1,6 @@
 package com.ecommerce.domain.service;
 
 import com.ecommerce.common.enums.ErrorCode;
-import com.ecommerce.common.enums.Role;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.dto.product.ProductCreateDto;
@@ -55,7 +54,7 @@ public class ProductService {
     MemberEntity seller = memberRepository.findById(sellerId)
         .orElseThrow(() -> new CustomException(ErrorCode.SELLER_NOT_FOUND));
 
-    if (!Role.SELLER.equals(seller.getRole()) || !sellerId.equals(userId)) {
+    if (!sellerId.equals(userId)) {
       throw new CustomException(ErrorCode.INVALID_SELLER_ACCESS);
     }
 
