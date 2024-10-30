@@ -41,7 +41,7 @@ public class EmailService {
    *
    * @param email 이메일 주소
    */
-  public void sendEmailVerification(String email) {
+  public void sendEmailVerification(String email) throws MessagingException {
     String verificationCode = generateVerificationCode();
     String title = "회원가입 인증 메일";
     String content = "<html>"

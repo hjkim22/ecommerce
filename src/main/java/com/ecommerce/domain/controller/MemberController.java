@@ -10,8 +10,8 @@ import com.ecommerce.domain.dto.member.SignInDto;
 import com.ecommerce.domain.dto.member.SignUpDto;
 import com.ecommerce.domain.service.EmailService;
 import com.ecommerce.domain.service.MemberService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
-import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +55,8 @@ public class MemberController {
 
   // 인증 메일 전송
   @PostMapping("/verification-code/send")
-  public ResponseEntity<Void> sendEmail(@RequestBody @Valid EmailVerificationRequestDto request) {
+  public ResponseEntity<Void> sendEmail(@RequestBody @Valid EmailVerificationRequestDto request)
+      throws MessagingException {
     log.info("인증 메일 전송 요청 - 이메일: {}", request.email());
     emailService.sendEmailVerification(request.email());
     log.info("인증 메일 전송 완료");
