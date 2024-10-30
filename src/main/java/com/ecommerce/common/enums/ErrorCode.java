@@ -16,7 +16,10 @@ public enum ErrorCode {
   SHORT_PASSWORD(HttpStatus.BAD_REQUEST.value(), "비밀번호는 6자 이상이어야 합니다."),
   INVALID_ROLE(HttpStatus.BAD_REQUEST.value(), "유효하지 않은 역할입니다. 'CUSTOMER' 또는 'SELLER' 만 입력 가능합니다."),
   INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST.value(), "잘못된 인증 코드입니다."),
-  VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST.value(), "인증 코드가 만료되었습니다.");
+  VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST.value(), "인증 코드가 만료되었습니다."),
+
+  // 보안 관련 오류 코드
+  INVALID_ACCESS_TOKEN(HttpStatus.FORBIDDEN.value(), "접근 권한이 없습니다.");
 
   private final int statusCode;     // Http 상태 코드
   private final String description; // 오류 설명
