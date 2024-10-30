@@ -1,5 +1,8 @@
 package com.ecommerce.domain.dto.product;
 
+import com.ecommerce.common.enums.ProductStatus;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -33,6 +36,9 @@ public class ProductCreateDto {
     @NotNull
     @Min(0)
     private int stockQuantity;
+
+    @Enumerated(EnumType.STRING)
+    private ProductStatus status = ProductStatus.AVAILABLE;
   }
 
   @Getter
