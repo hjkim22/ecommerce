@@ -7,6 +7,7 @@ import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.dto.product.ProductCreateDto;
 import com.ecommerce.domain.dto.product.ProductCreateDto.Request;
 import com.ecommerce.domain.dto.product.ProductDto;
+import com.ecommerce.domain.dto.product.ProductUpdateDto;
 import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.entity.ProductEntity;
 import com.ecommerce.domain.repository.MemberRepository;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +29,7 @@ public class ProductService {
   // 상품 등록
   public ProductCreateDto.Response createProduct(ProductCreateDto.Request request,
       HttpServletRequest httpServletRequest) {
-    String token = tokenProvider.extractToken(httpServletRequest);
-    Long userId = validateTokenAndExtractUserId(token);
+    Long userId = extractUserId(httpServletRequest);
     MemberEntity seller = validateSeller(request.getSellerId(), userId);
     ProductEntity product = createProductEntityFromDto(request, seller);
 
@@ -83,14 +84,32 @@ public class ProductService {
   }
 
   // 상품 업데이트
+  @Transactional
+  public ProductDto updateProduct(Long id, ProductUpdateDto request,
+      HttpServletRequest httpServletRequest) {
+    ProductEntity product = validateProductAndAccess(id, httpServletRequest);
+
+    product.setProductName(request.getProductName());
+    product.setDescription(request.getDescription());
+    product.setPrice(request.getPrice());
+    product.setStockQuantity(request.getStockQuantity());
+    product.setStatus(request.getStatus());
+    return ProductDto.fromEntity(product);
+  }
+
   // 상품 삭제
+  @Transactional
+  public void deleteProduct(Long id, HttpServletRequest httpServletRequest) {
+    ProductEntity product = validateProductAndAccess(id, httpServletRequest);
+    productRepository.delete(product);
+  }
 
   // 토큰 검증, id 추출
-  private Long validateTokenAndExtractUserId(String token) {
+  private Long extractUserId(HttpServletRequest httpServletRequest) {
+    String token = tokenProvider.extractToken(httpServletRequest);
     if (token == null || !tokenProvider.isValidToken(token)) {
       throw new CustomException(ErrorCode.INVALID_TOKEN);
     }
-
     return tokenProvider.extractUserIdFromToken(token);
   }
 
@@ -104,6 +123,17 @@ public class ProductService {
     }
 
     return seller;
+  }
+
+  // 상품 조회, 권한 검증
+  private ProductEntity validateProductAndAccess(Long id, HttpServletRequest httpServletRequest) {
+    Long userId = extractUserId(httpServletRequest);
+    ProductEntity product = productRepository.findById(id)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    if (!product.getSeller().getId().equals(userId)) {
+      throw new CustomException(ErrorCode.INVALID_SELLER_ACCESS);
+    }
+    return product;
   }
 
   // 상품 엔티티 생성
