@@ -1,10 +1,10 @@
 package com.ecommerce.domain.dto.product;
 
 import com.ecommerce.common.enums.ProductStatus;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,20 +19,15 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ProductUpdateDto {
 
-  @NotBlank
   private String productName;
-
-  @NotBlank
   private String description;
 
-  @NotNull
-  @DecimalMin(value = "0.0", inclusive = false)
+  @DecimalMin(value = "0.0", inclusive = false, message = "가격은 0보다 커야 합니다.")
   private BigDecimal price;
 
-  @NotNull
-  @Min(0)
-  private int stockQuantity;
+  @Min(value = 0, message = "재고 수량은 0 이상이어야 합니다.")
+  private Integer stockQuantity;
 
-  @NotNull
+  @Enumerated(EnumType.STRING)
   private ProductStatus status;
 }

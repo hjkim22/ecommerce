@@ -10,10 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,24 +29,15 @@ public class ProductEntity extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @NotBlank
   private String productName;
-
-  @NotBlank
   private String description;
-
-  @NotNull
-  @DecimalMin(value = "0.0", inclusive = false)
   private BigDecimal price;
-
-  @NotNull
-  @Min(0)
-  private int stockQuantity;
+  private Integer stockQuantity;
 
   @ManyToOne(fetch = FetchType.LAZY) // 지연로딩, 필드에 접근할 때만 필요한 정보 가져옴
   @JoinColumn(name = "member_id", nullable = false)
   private MemberEntity seller;
 
   @Enumerated(EnumType.STRING)
-  private ProductStatus status = ProductStatus.AVAILABLE;
+  private ProductStatus status;
 }

@@ -33,7 +33,7 @@ public class ProductService {
     MemberEntity seller = validateSeller(request.getSellerId(), userId);
     ProductEntity product = createProductEntityFromDto(request, seller);
 
-    return new ProductCreateDto.Response(product.getId(), product.getProductName(), "상품 등록 완료");
+    return new ProductCreateDto.Response(product.getId(), "상품 등록 완료");
   }
 
   // 상품 조회(id)
@@ -89,11 +89,22 @@ public class ProductService {
       HttpServletRequest httpServletRequest) {
     ProductEntity product = validateProductAndAccess(id, httpServletRequest);
 
-    product.setProductName(request.getProductName());
-    product.setDescription(request.getDescription());
-    product.setPrice(request.getPrice());
-    product.setStockQuantity(request.getStockQuantity());
-    product.setStatus(request.getStatus());
+    if (request.getProductName() != null) {
+      product.setProductName(request.getProductName());
+    }
+    if (request.getDescription() != null) {
+      product.setDescription(request.getDescription());
+    }
+    if (request.getPrice() != null) {
+      product.setPrice(request.getPrice());
+    }
+    if (request.getStockQuantity() != null) {
+      product.setStockQuantity(request.getStockQuantity());
+    }
+    if (request.getStatus() != null) {
+      product.setStatus(request.getStatus());
+    }
+
     return ProductDto.fromEntity(product);
   }
 
