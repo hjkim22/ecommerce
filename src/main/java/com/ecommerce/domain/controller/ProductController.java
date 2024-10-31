@@ -9,6 +9,7 @@ import com.ecommerce.domain.dto.product.ProductUpdateDto;
 import com.ecommerce.domain.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -32,39 +34,47 @@ public class ProductController {
   private final ProductService productService;
 
   @PreAuthorize("hasRole('ROLE_SELLER')")
-  @PostMapping("/create")
+  @PostMapping
   public ResponseEntity<ProductCreateDto.Response> createProduct(
       @Valid @RequestBody ProductCreateDto.Request request,
       HttpServletRequest httpServletRequest) {
-
+    log.info("상품 생성 요청");
     ProductCreateDto.Response newProduct = productService.createProduct(request,
         httpServletRequest);
+    log.info("상품 생성 성공 - ID: {}", newProduct.getProductId());
     return ResponseEntity.status(CREATED).body(newProduct);
   }
 
   @GetMapping("/{productId}")
   public ResponseEntity<ProductDto> getProductById(@PathVariable("productId") Long id) {
+    log.info("상품 정보 조회 요청 - ID: {}", id);
     ProductDto product = productService.getProductById(id);
     return ResponseEntity.ok(product);
   }
 
-  @GetMapping("/name/{name}")
-  public ResponseEntity<List<ProductDto>> getProductByName(@PathVariable("name") String name) {
-    List<ProductDto> products = productService.getProductByName(name);
-    return ResponseEntity.ok(products);
-  }
+  @GetMapping("/search")
+  public ResponseEntity<List<ProductDto>> searchProducts(
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) Long sellerId,
+      @RequestParam(required = false) ProductStatus status) {
 
-  @GetMapping("/seller-id/{sellerId}")
-  public ResponseEntity<List<ProductDto>> getProductBySellerId(@PathVariable("sellerId") Long id) {
-    List<ProductDto> products = productService.getProductBySellerId(id);
-    return ResponseEntity.ok(products);
-  }
+    log.info("상품 검색 요청 - 이름: {}, 판매자 ID: {}, 상태: {}", name, sellerId, status);
+    List<ProductDto> products = new ArrayList<>();
 
-  @GetMapping("/status/{status}")
-  public ResponseEntity<List<ProductDto>> getProductByStatus(
-      @PathVariable("status") ProductStatus status) {
+    if (name != null && !name.isEmpty()) {
+      products.addAll(productService.getProductByName(name));
+    }
+    if (sellerId != null) {
+      products.addAll(productService.getProductBySellerId(sellerId));
+    }
+    if (status != null) {
+      products.addAll(productService.getProductByStatus(status));
+    }
+    if (products.isEmpty()) {
+      log.info("상품 검색 결과 없음");
+      return ResponseEntity.noContent().build(); // 빈 리스트일 경우 204 No Content 반환
+    }
 
-    List<ProductDto> products = productService.getProductByStatus(status);
     return ResponseEntity.ok(products);
   }
 
@@ -75,6 +85,7 @@ public class ProductController {
       @Valid @RequestBody ProductUpdateDto request,
       HttpServletRequest httpServletRequest) {
 
+    log.info("상품 업데이트 요청 - ID: {}", id);
     ProductDto updatedProduct = productService.updateProduct(id, request, httpServletRequest);
     return ResponseEntity.ok(updatedProduct);
   }
@@ -83,6 +94,7 @@ public class ProductController {
   @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long id,
       HttpServletRequest httpServletRequest) {
+    log.info("상품 삭제 요청 - ID: {}", id);
     productService.deleteProduct(id, httpServletRequest);
     return ResponseEntity.noContent().build();
   }

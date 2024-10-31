@@ -26,41 +26,55 @@ public class ProductService {
   private final MemberRepository memberRepository;
   private final TokenProvider tokenProvider;
 
-  // 상품 등록
+  /**
+   * 상품 등록
+   * @param request 상품 생성 요청 데이터
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 상품 등록 결과
+   */
   public ProductCreateDto.Response createProduct(ProductCreateDto.Request request,
       HttpServletRequest httpServletRequest) {
     Long userId = extractUserId(httpServletRequest);
-    MemberEntity seller = validateSeller(request.getSellerId(), userId);
-    ProductEntity product = createProductEntityFromDto(request, seller);
+    MemberEntity seller = validateSeller(request.getSellerId(), userId); // 판매자 유효성 검사
+    ProductEntity product = buildProductEntity(request, seller); // DTO 로부터 상품 엔티티 생성
 
     return new ProductCreateDto.Response(product.getId(), "상품 등록 완료");
   }
 
-  // 상품 조회(id)
+  /**
+   * 상품 정보 조회
+   * @param id 상품 ID
+   * @return 상품 DTO
+   */
   public ProductDto getProductById(Long id) {
     ProductEntity product = productRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+
     return ProductDto.fromEntity(product);
   }
 
-  // 상품 조회(productName)
+  /**
+   * 상품 정보 조회
+   * @param name 상품명
+   * @return 상품 DTO 리스트
+   */
   public List<ProductDto> getProductByName(String name) {
     List<ProductEntity> products = productRepository.findByProductNameContaining(name);
 
-    if (products.isEmpty()) {
-      throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
-    }
-
     return products.stream()
         .map(ProductDto::fromEntity)
-        .toList();
+        .toList(); // 조회된 상품이 없더라도 빈 리스트를 반환
   }
 
-  // 상품 조회(sellerId)
+  /**
+   * 상품 정보 조회
+   * @param id 판매자 ID
+   * @return 상품 DTO 리스트
+   */
   public List<ProductDto> getProductBySellerId(Long id) {
-    if (!memberRepository.existsById(id)) {
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
-    }
+    memberRepository.findById(id)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
     List<ProductEntity> products = productRepository.findBySellerId(id);
 
     if (products.isEmpty()) {
@@ -72,23 +86,30 @@ public class ProductService {
         .toList();
   }
 
-  // 상품 상태별 조회
+  /**
+   * 상품 정보 조회
+   * @param status 상품 상태
+   * @return 상품 DTO 리스트
+   */
   public List<ProductDto> getProductByStatus(ProductStatus status) {
-    List<ProductEntity> products = productRepository.findByStatus(status);
-    if (products.isEmpty()) {
-      throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
-    }
-    return products.stream()
+    return productRepository.findByStatus(status).stream()
         .map(ProductDto::fromEntity)
         .toList();
   }
 
-  // 상품 업데이트
+  /**
+   * 상품 정보 업데이트
+   * @param id 상품 ID
+   * @param request 업데이트 요청 데이터
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 업데이트된 상품 DTO
+   */
   @Transactional
   public ProductDto updateProduct(Long id, ProductUpdateDto request,
       HttpServletRequest httpServletRequest) {
-    ProductEntity product = validateProductAndAccess(id, httpServletRequest);
+    ProductEntity product = validateProductAndAccess(id, httpServletRequest); // 상품 및 접근 유효성 검사
 
+    // 요청 데이터에 따라 상품 정보 업데이트
     if (request.getProductName() != null) {
       product.setProductName(request.getProductName());
     }
@@ -108,23 +129,36 @@ public class ProductService {
     return ProductDto.fromEntity(product);
   }
 
-  // 상품 삭제
+  /**
+   * 상품 삭제
+   * @param id 상품 ID
+   * @param httpServletRequest HTTP 요청 정보
+   */
   @Transactional
   public void deleteProduct(Long id, HttpServletRequest httpServletRequest) {
     ProductEntity product = validateProductAndAccess(id, httpServletRequest);
     productRepository.delete(product);
   }
 
-  // 토큰 검증, id 추출
+  /**
+   * HTTP 요청에서 사용자 ID 추출
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 추출된 사용자 ID
+   */
   private Long extractUserId(HttpServletRequest httpServletRequest) {
     String token = tokenProvider.extractToken(httpServletRequest);
     if (token == null || !tokenProvider.isValidToken(token)) {
       throw new CustomException(ErrorCode.INVALID_TOKEN);
     }
-    return tokenProvider.extractUserIdFromToken(token);
+    return tokenProvider.extractUserIdFromToken(token); // 토큰에서 사용자 ID 추출
   }
 
-  // seller 검증
+  /**
+   * 판매자 유효성을 검사
+   * @param sellerId 판매자 ID
+   * @param userId 요청한 사용자 ID
+   * @return 유효한 판매자 엔티티
+   */
   private MemberEntity validateSeller(Long sellerId, Long userId) {
     MemberEntity seller = memberRepository.findById(sellerId)
         .orElseThrow(() -> new CustomException(ErrorCode.SELLER_NOT_FOUND));
@@ -136,7 +170,12 @@ public class ProductService {
     return seller;
   }
 
-  // 상품 조회, 권한 검증
+  /**
+   * 상품 및 접근 유효성 검사
+   * @param id 상품 ID
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 유효한 상품 엔티티
+   */
   private ProductEntity validateProductAndAccess(Long id, HttpServletRequest httpServletRequest) {
     Long userId = extractUserId(httpServletRequest);
     ProductEntity product = productRepository.findById(id)
@@ -147,8 +186,13 @@ public class ProductService {
     return product;
   }
 
-  // 상품 엔티티 생성
-  private ProductEntity createProductEntityFromDto(Request request, MemberEntity seller) {
+  /**
+   * 상품 엔티티 생성
+   * @param request 상품 생성 요청 데이터
+   * @param seller 판매자 엔티티
+   * @return 생성된 상품 엔티티
+   */
+  private ProductEntity buildProductEntity(Request request, MemberEntity seller) {
     return productRepository.save(ProductEntity.builder()
         .productName(request.getProductName())
         .description(request.getDescription())
