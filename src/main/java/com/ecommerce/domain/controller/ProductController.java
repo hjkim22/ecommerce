@@ -2,14 +2,19 @@ package com.ecommerce.domain.controller;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
+import com.ecommerce.common.enums.ProductStatus;
 import com.ecommerce.domain.dto.product.ProductCreateDto;
+import com.ecommerce.domain.dto.product.ProductDto;
 import com.ecommerce.domain.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,5 +37,31 @@ public class ProductController {
     ProductCreateDto.Response newProduct = productService.createProduct(request,
         httpServletRequest);
     return ResponseEntity.status(CREATED).body(newProduct);
+  }
+
+  @GetMapping("/{productId}")
+  public ResponseEntity<ProductDto> getProductById(@PathVariable("productId") Long id) {
+    ProductDto product = productService.getProductById(id);
+    return ResponseEntity.ok(product);
+  }
+
+  @GetMapping("/name/{name}")
+  public ResponseEntity<List<ProductDto>> getProductByName(@PathVariable("name") String name) {
+    List<ProductDto> products = productService.getProductByName(name);
+    return ResponseEntity.ok(products);
+  }
+
+  @GetMapping("/seller-id/{sellerId}")
+  public ResponseEntity<List<ProductDto>> getProductBySellerId(@PathVariable("sellerId") Long id) {
+    List<ProductDto> products = productService.getProductBySellerId(id);
+    return ResponseEntity.ok(products);
+  }
+
+  @GetMapping("/status/{status}")
+  public ResponseEntity<List<ProductDto>> getProductByStatus(
+      @PathVariable("status") ProductStatus status) {
+
+    List<ProductDto> products = productService.getProductByStatus(status);
+    return ResponseEntity.ok(products);
   }
 }

@@ -1,15 +1,18 @@
 package com.ecommerce.domain.service;
 
 import com.ecommerce.common.enums.ErrorCode;
+import com.ecommerce.common.enums.ProductStatus;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.dto.product.ProductCreateDto;
 import com.ecommerce.domain.dto.product.ProductCreateDto.Request;
+import com.ecommerce.domain.dto.product.ProductDto;
 import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.entity.ProductEntity;
 import com.ecommerce.domain.repository.MemberRepository;
 import com.ecommerce.domain.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,9 +36,52 @@ public class ProductService {
   }
 
   // 상품 조회(id)
+  public ProductDto getProductById(Long id) {
+    ProductEntity product = productRepository.findById(id)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    return ProductDto.fromEntity(product);
+  }
+
   // 상품 조회(productName)
+  public List<ProductDto> getProductByName(String name) {
+    List<ProductEntity> products = productRepository.findByProductNameContaining(name);
+
+    if (products.isEmpty()) {
+      throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
+    }
+
+    return products.stream()
+        .map(ProductDto::fromEntity)
+        .toList();
+  }
+
   // 상품 조회(sellerId)
-  // 상품 조회(sellerName)
+  public List<ProductDto> getProductBySellerId(Long id) {
+    if (!memberRepository.existsById(id)) {
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+    List<ProductEntity> products = productRepository.findBySellerId(id);
+
+    if (products.isEmpty()) {
+      throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
+    }
+
+    return products.stream()
+        .map(ProductDto::fromEntity)
+        .toList();
+  }
+
+  // 상품 상태별 조회
+  public List<ProductDto> getProductByStatus(ProductStatus status) {
+    List<ProductEntity> products = productRepository.findByStatus(status);
+    if (products.isEmpty()) {
+      throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
+    }
+    return products.stream()
+        .map(ProductDto::fromEntity)
+        .toList();
+  }
+
   // 상품 업데이트
   // 상품 삭제
 
