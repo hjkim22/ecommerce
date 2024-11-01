@@ -161,7 +161,7 @@ public class ProductService {
     ProductEntity product = productRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
     if (!product.getSeller().getId().equals(sellerId)) {
-      throw new CustomException(ErrorCode.INVALID_SELLER_ACCESS);
+      throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
     return product;
   }
