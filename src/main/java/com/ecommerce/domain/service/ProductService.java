@@ -3,7 +3,6 @@ package com.ecommerce.domain.service;
 import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.ProductStatus;
 import com.ecommerce.common.exception.CustomException;
-import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.dto.product.ProductCreateDto;
 import com.ecommerce.domain.dto.product.ProductCreateDto.Request;
 import com.ecommerce.domain.dto.product.ProductDto;
@@ -12,7 +11,6 @@ import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.entity.ProductEntity;
 import com.ecommerce.domain.repository.MemberRepository;
 import com.ecommerce.domain.repository.ProductRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,18 +22,15 @@ public class ProductService {
 
   private final ProductRepository productRepository;
   private final MemberRepository memberRepository;
-  private final TokenProvider tokenProvider;
 
   /**
    * 상품 등록
    * @param request 상품 생성 요청 데이터
-   * @param httpServletRequest HTTP 요청 정보
+   * @param sellerId 판매자 ID
    * @return 상품 등록 결과
    */
-  public ProductCreateDto.Response createProduct(ProductCreateDto.Request request,
-      HttpServletRequest httpServletRequest) {
-    Long userId = extractUserId(httpServletRequest);
-    MemberEntity seller = validateSeller(request.getSellerId(), userId); // 판매자 유효성 검사
+  public ProductCreateDto.Response createProduct(ProductCreateDto.Request request, Long sellerId) {
+    MemberEntity seller = validateSeller(request.getSellerId(), sellerId); // 판매자 유효성 검사
     ProductEntity product = buildProductEntity(request, seller); // DTO 로부터 상품 엔티티 생성
 
     return new ProductCreateDto.Response(product.getId(), "상품 등록 완료");
@@ -101,13 +96,12 @@ public class ProductService {
    * 상품 정보 업데이트
    * @param id 상품 ID
    * @param request 업데이트 요청 데이터
-   * @param httpServletRequest HTTP 요청 정보
+   * @param sellerId 판매자 ID
    * @return 업데이트된 상품 DTO
    */
   @Transactional
-  public ProductDto updateProduct(Long id, ProductUpdateDto request,
-      HttpServletRequest httpServletRequest) {
-    ProductEntity product = validateProductAndAccess(id, httpServletRequest); // 상품 및 접근 유효성 검사
+  public ProductDto updateProduct(Long id, ProductUpdateDto request, Long sellerId) {
+    ProductEntity product = validateProductAndAccess(id, sellerId); // 상품 및 접근 유효성 검사
 
     // 요청 데이터에 따라 상품 정보 업데이트
     if (request.getProductName() != null) {
@@ -132,25 +126,12 @@ public class ProductService {
   /**
    * 상품 삭제
    * @param id 상품 ID
-   * @param httpServletRequest HTTP 요청 정보
+   * @param sellerId 판매자 ID
    */
   @Transactional
-  public void deleteProduct(Long id, HttpServletRequest httpServletRequest) {
-    ProductEntity product = validateProductAndAccess(id, httpServletRequest);
+  public void deleteProduct(Long id, Long sellerId) {
+    ProductEntity product = validateProductAndAccess(id, sellerId);
     productRepository.delete(product);
-  }
-
-  /**
-   * HTTP 요청에서 사용자 ID 추출
-   * @param httpServletRequest HTTP 요청 정보
-   * @return 추출된 사용자 ID
-   */
-  private Long extractUserId(HttpServletRequest httpServletRequest) {
-    String token = tokenProvider.extractToken(httpServletRequest);
-    if (token == null || !tokenProvider.isValidToken(token)) {
-      throw new CustomException(ErrorCode.INVALID_TOKEN);
-    }
-    return tokenProvider.extractUserIdFromToken(token); // 토큰에서 사용자 ID 추출
   }
 
   /**
@@ -173,14 +154,13 @@ public class ProductService {
   /**
    * 상품 및 접근 유효성 검사
    * @param id 상품 ID
-   * @param httpServletRequest HTTP 요청 정보
+   * @param sellerId 판매자 ID
    * @return 유효한 상품 엔티티
    */
-  private ProductEntity validateProductAndAccess(Long id, HttpServletRequest httpServletRequest) {
-    Long userId = extractUserId(httpServletRequest);
+  private ProductEntity validateProductAndAccess(Long id, Long sellerId) {
     ProductEntity product = productRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
-    if (!product.getSeller().getId().equals(userId)) {
+    if (!product.getSeller().getId().equals(sellerId)) {
       throw new CustomException(ErrorCode.INVALID_SELLER_ACCESS);
     }
     return product;
