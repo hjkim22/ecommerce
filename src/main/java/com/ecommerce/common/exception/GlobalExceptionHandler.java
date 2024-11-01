@@ -1,6 +1,6 @@
 package com.ecommerce.common.exception;
 
-import java.util.Objects;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,14 +24,21 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(NullPointerException.class)
   public ResponseEntity<ErrorResponse> handleNullPointerException(NullPointerException e) {
     logger.error("Null pointer exception: {}", e.getMessage());
-    ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error.");
+    ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+        "Internal server error.");
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
   }
 
   // 유효성 검사에서 실패 시
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException e) {
-    String errorMessage = "Validation failed: " + Objects.requireNonNull(e.getFieldError()).getDefaultMessage();
+  public ResponseEntity<ErrorResponse> handleValidationExceptions(
+      MethodArgumentNotValidException e) {
+    List<String> errorMessages = e.getFieldErrors().stream()
+        .map(fieldError -> String.format("%s: %s", fieldError.getField(),
+            fieldError.getDefaultMessage()))
+        .toList();
+
+    String errorMessage = "Validation failed: " + String.join(", ", errorMessages);
     ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), errorMessage);
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
   }

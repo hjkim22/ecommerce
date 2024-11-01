@@ -100,7 +100,7 @@ public class MemberService {
   public List<MemberDto> findRecentMembers(int limit) {
     final int MAX_LIMIT = 50;
     if (limit > MAX_LIMIT) {
-      log.warn("요청한 limit {}는 최대 {}를 초과하여 기본값 10으로 설정합니다.", limit, MAX_LIMIT);
+      log.warn("최대값({}) 초과하여 기본값 10으로 조회", MAX_LIMIT);
       limit = 10; // 기본값으로 대체
     }
 

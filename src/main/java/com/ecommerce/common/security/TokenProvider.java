@@ -53,7 +53,8 @@ public class TokenProvider {
     Long userID = extractUserIdFromToken(token); // 토큰에서 ID 추출
     Role role = Role.valueOf(getClaims(token).get(CLAIM_ROLES).toString()); // 토큰에서 역할 추출
 
-    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role.name()); // 역할을 권한으로 변환
+    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(
+        "ROLE_" + role.name()); // 역할을 권한으로 변환
     User principal = new User(userID.toString(), "", Collections.singletonList(authority));
 
     return new UsernamePasswordAuthenticationToken(principal, token,
