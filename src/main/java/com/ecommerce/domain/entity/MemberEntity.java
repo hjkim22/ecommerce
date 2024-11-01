@@ -1,6 +1,7 @@
 package com.ecommerce.domain.entity;
 
 import com.ecommerce.common.enums.Role;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -56,9 +58,9 @@ public class MemberEntity extends BaseTimeEntity implements UserDetails {
   @Enumerated(EnumType.STRING)
   private Role role;
 
-  // TODO
-  // 사용자 여부 확인 메서드
-  // 판매자 여부 확인 메서드
+  // ProductEntity 와의 관계 설정 / MemberEntity 삭제 시 관련된 ProductEntity 함께 삭제
+  @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ProductEntity> products;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
