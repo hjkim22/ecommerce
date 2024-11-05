@@ -119,6 +119,18 @@ public class CartService {
     return new AddToCartDto.Response(productId, request.getQuantity(), "수량 수정 완료");
   }
 
+  // 비우기
+  public void clearCart(Long cartId) {
+    CartEntity cart = cartRepository.findById(cartId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+
+    if (cart.getCartItems().isEmpty()) {
+      throw new CustomException(ErrorCode.CART_EMPTY);
+    }
+
+    cart.getCartItems().clear();
+    cartRepository.save(cart);
+  }
 
   // CartItemEntity 생성
   private CartItemEntity createCartItem(CartEntity cart, ProductEntity product, Integer quantity) {
