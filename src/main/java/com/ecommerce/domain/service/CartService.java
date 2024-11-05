@@ -5,6 +5,7 @@ import com.ecommerce.common.enums.ProductStatus;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.domain.dto.cart.AddToCartDto;
 import com.ecommerce.domain.dto.cart.CartDto;
+import com.ecommerce.domain.dto.cartItem.UpdateCartItemDto;
 import com.ecommerce.domain.entity.CartEntity;
 import com.ecommerce.domain.entity.CartItemEntity;
 import com.ecommerce.domain.entity.MemberEntity;
@@ -94,6 +95,30 @@ public class CartService {
 
     return CartDto.fromEntity(cart);
   }
+
+  // 수량 수정
+  @Transactional
+  public AddToCartDto.Response updateCartItemQuantity(Long cartId, Long productId,
+      UpdateCartItemDto request) {
+    CartEntity cart = cartRepository.findById(cartId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+
+    ProductEntity product = productRepository.findById(productId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+
+    if (request.getQuantity() > product.getStockQuantity()) {
+      throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
+    }
+
+    CartItemEntity existingCartItem = cart.getCartItems().stream()
+        .filter(item -> item.getProduct().getId().equals(productId))
+        .findFirst()
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    existingCartItem.setQuantity(request.getQuantity());
+
+    return new AddToCartDto.Response(productId, request.getQuantity(), "수량 수정 완료");
+  }
+
 
   // CartItemEntity 생성
   private CartItemEntity createCartItem(CartEntity cart, ProductEntity product, Integer quantity) {

@@ -5,6 +5,7 @@ import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.dto.cart.AddToCartDto;
 import com.ecommerce.domain.dto.cart.CartDto;
+import com.ecommerce.domain.dto.cartItem.UpdateCartItemDto;
 import com.ecommerce.domain.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,5 +62,18 @@ public class CartController {
   public ResponseEntity<CartDto> getCartByCustomerId(@PathVariable("customerId") Long id) {
     CartDto cart = cartService.getCartByCustomerId(id);
     return ResponseEntity.ok(cart);
+  }
+
+  // 수정
+  @PreAuthorize("hasRole('ROLE_CUSTOMER')")
+  @PatchMapping("/{cartId}/items/{productId}")
+  public ResponseEntity<AddToCartDto.Response> updateCartItemQuantity(
+      @PathVariable Long cartId,
+      @PathVariable Long productId,
+      @Valid @RequestBody UpdateCartItemDto request,
+      HttpServletRequest httpServletRequest) {
+    extractCustomerId(httpServletRequest);
+    AddToCartDto.Response response = cartService.updateCartItemQuantity(cartId, productId, request);
+    return ResponseEntity.ok(response);
   }
 }
