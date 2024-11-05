@@ -4,6 +4,7 @@ import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.dto.cart.AddToCartDto;
+import com.ecommerce.domain.dto.cart.CartDto;
 import com.ecommerce.domain.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,5 +46,19 @@ public class CartController {
     Long customerId = extractCustomerId(httpServletRequest);
     AddToCartDto.Response response = cartService.addItemToCart(customerId, request);
     return ResponseEntity.ok(response);
+  }
+
+  // cartId 조회
+  @GetMapping("/{cartId}")
+  public ResponseEntity<CartDto> getCartById(@PathVariable("cartId") Long id) {
+    CartDto cart = cartService.getCartById(id);
+    return ResponseEntity.ok(cart);
+  }
+
+  // customerId 조회
+  @GetMapping("/customerId/{customerId}")
+  public ResponseEntity<CartDto> getCartByCustomerId(@PathVariable("customerId") Long id) {
+    CartDto cart = cartService.getCartByCustomerId(id);
+    return ResponseEntity.ok(cart);
   }
 }
