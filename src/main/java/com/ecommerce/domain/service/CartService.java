@@ -36,39 +36,19 @@ public class CartService {
   // 장바구니에 상품 담기
   @Transactional
   public AddToCartDto.Response addItemToCart(Long customerId, AddToCartDto.Request request) {
-    CartEntity cart = cartRepository.findByCustomerId(customerId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+    CartEntity cart = findCartByCustomerId(customerId);
+    ProductEntity product = findProductById(request.getProductId());
 
-    ProductEntity product = productRepository.findById(request.getProductId())
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    validateProductStatus(product);
+    validateProductQuantity(product, request.getQuantity());
 
-    // 상품 비활성화 상태
-    if (product.getStatus() == ProductStatus.INACTIVE) {
-      throw new CustomException(ErrorCode.PRODUCT_INACTIVE);
-    }
-    // 상품 품절 상태
-    if (product.getStatus() == ProductStatus.OUT_OF_STOCK) {
-      throw new CustomException(ErrorCode.PRODUCT_OUT_OF_STOCK);
-    }
-
-    CartItemEntity existingCartItem = cart.getCartItems().stream()
-        .filter(item -> item.getProduct().getId().equals(product.getId()))
-        .findFirst()
-        .orElse(null);
+    CartItemEntity existingCartItem = findCartItem(cart, product);
 
     if (existingCartItem != null) {
       int updatedQuantity = existingCartItem.getQuantity() + request.getQuantity();
-
-      if (updatedQuantity > product.getStockQuantity()) {
-        throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
-      }
-
+      validateProductQuantity(product, updatedQuantity);
       existingCartItem.setQuantity(updatedQuantity);
     } else {
-      if (request.getQuantity() > product.getStockQuantity()) {
-        throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
-      }
-
       CartItemEntity newCartItem = createCartItem(cart, product, request.getQuantity());
       cart.getCartItems().add(newCartItem);
     }
@@ -79,8 +59,7 @@ public class CartService {
 
   // cartId - 조회
   public CartDto getCartById(Long cartId) {
-    CartEntity cart = cartRepository.findById(cartId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+    CartEntity cart = findCartById(cartId);
 
     return CartDto.fromEntity(cart);
   }
@@ -90,8 +69,7 @@ public class CartService {
     memberRepository.findById(customerId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    CartEntity cart = cartRepository.findByCustomerId(customerId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+    CartEntity cart = findCartByCustomerId(customerId);
 
     return CartDto.fromEntity(cart);
   }
@@ -100,20 +78,12 @@ public class CartService {
   @Transactional
   public AddToCartDto.Response updateCartItemQuantity(Long cartId, Long productId,
       UpdateCartItemDto request) {
-    CartEntity cart = cartRepository.findById(cartId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+    CartEntity cart = findCartById(cartId);
+    ProductEntity product = findProductById(productId);
 
-    ProductEntity product = productRepository.findById(productId)
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    validateProductQuantity(product, request.getQuantity());
 
-    if (request.getQuantity() > product.getStockQuantity()) {
-      throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
-    }
-
-    CartItemEntity existingCartItem = cart.getCartItems().stream()
-        .filter(item -> item.getProduct().getId().equals(productId))
-        .findFirst()
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    CartItemEntity existingCartItem = findCartItem(cart, product);
     existingCartItem.setQuantity(request.getQuantity());
 
     return new AddToCartDto.Response(productId, request.getQuantity(), "수량 수정 완료");
@@ -121,8 +91,7 @@ public class CartService {
 
   // 비우기
   public void clearCart(Long cartId) {
-    CartEntity cart = cartRepository.findById(cartId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+    CartEntity cart = findCartById(cartId);
 
     if (cart.getCartItems().isEmpty()) {
       throw new CustomException(ErrorCode.CART_EMPTY);
@@ -139,5 +108,42 @@ public class CartService {
         .product(product)
         .quantity(quantity)
         .build();
+  }
+
+  private CartEntity findCartById(Long cartId) {
+    return cartRepository.findById(cartId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+  }
+
+  private CartEntity findCartByCustomerId(Long customerId) {
+    return cartRepository.findByCustomerId(customerId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+  }
+
+  private ProductEntity findProductById(Long productId) {
+    return productRepository.findById(productId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+  }
+
+  private void validateProductStatus(ProductEntity product) {
+    if (product.getStatus() == ProductStatus.INACTIVE) {
+      throw new CustomException(ErrorCode.PRODUCT_INACTIVE);
+    }
+    if (product.getStatus() == ProductStatus.OUT_OF_STOCK) {
+      throw new CustomException(ErrorCode.PRODUCT_OUT_OF_STOCK);
+    }
+  }
+
+  private void validateProductQuantity(ProductEntity product, int quantity) {
+    if (quantity > product.getStockQuantity()) {
+      throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
+    }
+  }
+
+  private CartItemEntity findCartItem(CartEntity cart, ProductEntity product) {
+    return cart.getCartItems().stream()
+        .filter(item -> item.getProduct().getId().equals(product.getId()))
+        .findFirst()
+        .orElse(null);
   }
 }
