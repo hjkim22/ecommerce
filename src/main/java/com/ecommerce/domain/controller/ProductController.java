@@ -2,15 +2,12 @@ package com.ecommerce.domain.controller;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
-import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.ProductStatus;
-import com.ecommerce.common.exception.CustomException;
-import com.ecommerce.common.security.TokenProvider;
+import com.ecommerce.common.security.JwtToken;
 import com.ecommerce.domain.dto.product.ProductCreateDto;
 import com.ecommerce.domain.dto.product.ProductDto;
 import com.ecommerce.domain.dto.product.ProductUpdateDto;
 import com.ecommerce.domain.service.ProductService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,29 +32,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
   private final ProductService productService;
-  private final TokenProvider tokenProvider;
-
-  /**
-   * HTTP 요청에서 사용자 ID 추출
-   *
-   * @param httpServletRequest HTTP 요청 정보
-   * @return 추출된 사용자 ID
-   */
-  private Long extractSellerId(HttpServletRequest httpServletRequest) {
-    String token = tokenProvider.extractToken(httpServletRequest);
-    if (token == null || !tokenProvider.isValidToken(token)) {
-      throw new CustomException(ErrorCode.INVALID_TOKEN);
-    }
-    return tokenProvider.extractUserIdFromToken(token); // 토큰에서 사용자 ID 추출
-  }
 
   @PreAuthorize("hasRole('ROLE_SELLER')")
   @PostMapping
   public ResponseEntity<ProductCreateDto.Response> createProduct(
       @Valid @RequestBody ProductCreateDto.Request request,
-      HttpServletRequest httpServletRequest) {
+      @JwtToken Long sellerId) {
     log.info("상품 생성 요청");
-    Long sellerId = extractSellerId(httpServletRequest);
     ProductCreateDto.Response newProduct = productService.createProduct(request, sellerId);
     log.info("상품 생성 성공 - ID: {}", newProduct.getProductId());
     return ResponseEntity.status(CREATED).body(newProduct);
@@ -100,9 +81,8 @@ public class ProductController {
   public ResponseEntity<ProductDto> updateProduct(
       @PathVariable("productId") Long id,
       @Valid @RequestBody ProductUpdateDto request,
-      HttpServletRequest httpServletRequest) {
+      @JwtToken Long sellerId) {
     log.info("상품 업데이트 요청 - ID: {}", id);
-    Long sellerId = extractSellerId(httpServletRequest);
     ProductDto updatedProduct = productService.updateProduct(id, request, sellerId);
     return ResponseEntity.ok(updatedProduct);
   }
@@ -110,9 +90,8 @@ public class ProductController {
   @PreAuthorize("hasRole('ROLE_SELLER')")
   @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long id,
-      HttpServletRequest httpServletRequest) {
+      @JwtToken Long sellerId) {
     log.info("상품 삭제 요청 - ID: {}", id);
-    Long sellerId = extractSellerId(httpServletRequest);
     productService.deleteProduct(id, sellerId);
     return ResponseEntity.noContent().build();
   }

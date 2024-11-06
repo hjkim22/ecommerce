@@ -1,6 +1,7 @@
 package com.ecommerce.domain.service;
 
 import com.ecommerce.common.enums.ErrorCode;
+import com.ecommerce.common.enums.Role;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.dto.member.MemberDto;
@@ -28,6 +29,7 @@ public class MemberService {
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
   private final TokenProvider tokenProvider;
+  private final CartService cartService;
 
   /**
    * 회원가입
@@ -45,6 +47,11 @@ public class MemberService {
 
     String encodedPassword = passwordEncoder.encode(request.getPassword());
     MemberEntity savedMember = createMember(request, encodedPassword);
+
+    // CUSTOMER 인 경우만 장바구니 생성
+    if (savedMember.getRole() == Role.CUSTOMER) {
+      cartService.createCartForMember(savedMember);
+    }
 
     return new SignUpDto.Response(savedMember.getEmail(), savedMember.getName(), "회원가입 완료");
   }
