@@ -36,7 +36,8 @@ public enum ErrorCode {
 
   // 보안 관련 오류 코드
   INVALID_AUTH_TOKEN(HttpStatus.FORBIDDEN.value(), "접근 권한이 없습니다."),
-  INVALID_TOKEN(HttpStatus.UNAUTHORIZED.value(), "유효하지 않은 인증 토큰입니다.");
+  INVALID_TOKEN(HttpStatus.UNAUTHORIZED.value(), "유효하지 않은 인증 토큰입니다."),
+  TOKEN_MISSING(HttpStatus.BAD_REQUEST.value(), "토큰이 누락되었습니다.");
 
   private final int statusCode;     // Http 상태 코드
   private final String description; // 오류 설명
