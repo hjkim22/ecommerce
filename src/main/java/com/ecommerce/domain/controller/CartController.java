@@ -1,13 +1,10 @@
 package com.ecommerce.domain.controller;
 
-import com.ecommerce.common.enums.ErrorCode;
-import com.ecommerce.common.exception.CustomException;
-import com.ecommerce.common.security.TokenProvider;
+import com.ecommerce.common.security.JwtToken;
 import com.ecommerce.domain.dto.cart.AddToCartDto;
 import com.ecommerce.domain.dto.cart.CartDto;
 import com.ecommerce.domain.dto.cartItem.UpdateCartItemDto;
 import com.ecommerce.domain.service.CartService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,26 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class CartController {
 
   private final CartService cartService;
-  private final TokenProvider tokenProvider;
-
-  // HTTP 요청에서 사용자 ID 추출
-  private Long extractCustomerId(HttpServletRequest httpServletRequest) {
-    String token = tokenProvider.extractToken(httpServletRequest);
-    if (token == null || !tokenProvider.isValidToken(token)) {
-      log.warn("유효하지 않은 토큰으로 인해 인증 실패");
-      throw new CustomException(ErrorCode.INVALID_TOKEN);
-    }
-    return tokenProvider.extractUserIdFromToken(token); // 토큰에서 사용자 ID 추출
-  }
 
   // 담기
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @PostMapping
   public ResponseEntity<AddToCartDto.Response> addItemToCart(
       @Valid @RequestBody AddToCartDto.Request request,
-      HttpServletRequest httpServletRequest) {
+      @JwtToken Long customerId) {
     log.info("장바구니 상품 추가 요청");
-    Long customerId = extractCustomerId(httpServletRequest);
     AddToCartDto.Response response = cartService.addItemToCart(customerId, request);
     log.info("장바구니 상품 추가 완료 - 상품 ID: {}", response.getProductId());
     return ResponseEntity.ok(response);
@@ -76,10 +61,9 @@ public class CartController {
   public ResponseEntity<AddToCartDto.Response> updateCartItemQuantity(
       @PathVariable Long cartId,
       @PathVariable Long productId,
-      @Valid @RequestBody UpdateCartItemDto request,
-      HttpServletRequest httpServletRequest) {
-    extractCustomerId(httpServletRequest);
-    log.info("장바구니 상품 수량 수정 요청 - 장바구니 ID: {}, 상품 ID: {}, 수량: {}", cartId, productId, request.getQuantity());
+      @Valid @RequestBody UpdateCartItemDto request) {
+    log.info("장바구니 상품 수량 수정 요청 - 장바구니 ID: {}, 상품 ID: {}, 수량: {}", cartId, productId,
+        request.getQuantity());
     AddToCartDto.Response response = cartService.updateCartItemQuantity(cartId, productId, request);
     return ResponseEntity.ok(response);
   }
