@@ -4,13 +4,14 @@ import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.domain.dto.order.OrderCreateDto;
+import com.ecommerce.domain.dto.order.OrderDto;
 import com.ecommerce.domain.entity.CartEntity;
 import com.ecommerce.domain.entity.OrderEntity;
 import com.ecommerce.domain.entity.OrderItemEntity;
 import com.ecommerce.domain.entity.ProductEntity;
 import com.ecommerce.domain.repository.CartRepository;
+import com.ecommerce.domain.repository.MemberRepository;
 import com.ecommerce.domain.repository.OrderRepository;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class OrderService {
 
   private final OrderRepository orderRepository;
   private final CartRepository cartRepository;
+  private final MemberRepository memberRepository;
 
   // 주문 생성
   @Transactional // 주문 생성이랑 장바구니 비우기 때문에 주문 생성 실패 시 장바구니가 안비워지게.
@@ -60,6 +62,32 @@ public class OrderService {
     cartRepository.save(cart); // 더티체킹으로 생략 가능한지 확인
 
     return new OrderCreateDto.Response(request.getCartId(), order.getStatus(), "주문 완료");
+  }
+
+  // orderId로 조회
+  public OrderDto getOrderById(Long orderId) {
+    OrderEntity order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    return OrderDto.fromEntity(order);
+  }
+
+  // customerId로 조회
+  public List<OrderDto> getOrdersByCustomerId(Long customerId) {
+    memberRepository.findById(customerId)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    List<OrderEntity> orders = orderRepository.findByCustomerId(customerId);
+    if (orders.isEmpty()) {
+      throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
+    }
+
+    return orders.stream().map(OrderDto::fromEntity).toList();
+  }
+
+  // 상태별 조회
+  public List<OrderDto> getOrderByStatus(OrderStatus status) {
+    List<OrderEntity> orders = orderRepository.findByStatus(status);
+    return orders.stream().map(OrderDto::fromEntity).toList();
   }
 
   // 주문 항목 생성

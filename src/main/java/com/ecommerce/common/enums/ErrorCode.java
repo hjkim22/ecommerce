@@ -35,6 +35,9 @@ public enum ErrorCode {
   PRODUCT_OUT_OF_STOCK(HttpStatus.BAD_REQUEST.value(), "해당 상품은 품절입니다."),
   PRODUCT_INACTIVE(HttpStatus.BAD_REQUEST.value(), "해당 상품은 비활성화 상태입니다."),
 
+  // 주문 관련 코드
+  ORDER_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "주문을 찾을 수 없습니다."),
+
   // 보안 관련 오류 코드
   INVALID_AUTH_TOKEN(HttpStatus.FORBIDDEN.value(), "접근 권한이 없습니다."),
   INVALID_TOKEN(HttpStatus.UNAUTHORIZED.value(), "유효하지 않은 인증 토큰입니다."),

@@ -47,7 +47,7 @@ public class OrderEntity extends BaseTimeEntity {
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItemEntity> orderItems = new ArrayList<>();
 
-  @OneToOne(fetch = FetchType.LAZY) // 1개의 장바구니와 1:1
+  @ManyToOne(fetch = FetchType.LAZY) // 1개의 장바구니와 1:1
   @JoinColumn(name = "cart_id", nullable = false)
   private CartEntity cart;
 
