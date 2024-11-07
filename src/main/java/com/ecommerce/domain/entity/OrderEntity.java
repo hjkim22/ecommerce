@@ -56,6 +56,7 @@ public class OrderEntity extends BaseTimeEntity {
     BigDecimal calculatedTotalPrice = BigDecimal.ZERO;
     // 총 가격 계산
     for (OrderItemEntity orderItem : orderItems) {
+      orderItem.setOrder(this);
       calculatedTotalPrice = calculatedTotalPrice.add(
           orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
     }
