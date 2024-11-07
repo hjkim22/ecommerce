@@ -37,6 +37,9 @@ public enum ErrorCode {
 
   // 주문 관련 코드
   ORDER_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "주문을 찾을 수 없습니다."),
+  ORDER_CANNOT_BE_CANCELED(HttpStatus.BAD_REQUEST.value(), "대기 중인 주문만 취소할 수 있습니다."),
+  ORDER_CANNOT_BE_MODIFIED(HttpStatus.BAD_REQUEST.value(), "주문을 수정할 수 없습니다."),
+  INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST.value(), "잘못된 주문 상태입니다."),
 
   // 보안 관련 오류 코드
   INVALID_AUTH_TOKEN(HttpStatus.FORBIDDEN.value(), "접근 권한이 없습니다."),
