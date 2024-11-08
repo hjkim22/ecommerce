@@ -31,8 +31,9 @@ public class OrderService {
 
   /**
    * 주문 생성
+   *
    * @param customerId 사용자 ID
-   * @param request 주문 생성 요청 DTO
+   * @param request    주문 생성 요청 DTO
    * @return 주문 생성 응답 DTO
    */
   @Transactional
@@ -52,6 +53,7 @@ public class OrderService {
 
   /**
    * 주문 정보 조회
+   *
    * @param orderId 주문 ID
    * @return 주문 DTO
    */
@@ -61,6 +63,7 @@ public class OrderService {
 
   /**
    * 주문 정보 조회
+   *
    * @param customerId 사용자 ID
    * @return 주문 DTO 리스트
    */
@@ -76,6 +79,7 @@ public class OrderService {
 
   /**
    * 주문 정보 조회
+   *
    * @param status 주문 상태
    * @return 주문 DTO 리스트
    */
@@ -85,6 +89,7 @@ public class OrderService {
 
   /**
    * 사용자 주문 취소
+   *
    * @param orderId 주문 ID
    * @return 취소된 주문 DTO
    */
@@ -100,7 +105,8 @@ public class OrderService {
 
   /**
    * 주문 상태 변경
-   * @param orderId 주문 ID
+   *
+   * @param orderId   주문 ID
    * @param newStatus 새로운 주문 상태
    * @return 변경된 주문 DTO
    */
@@ -111,17 +117,19 @@ public class OrderService {
     // 상태별 변경 가능 여부 확인
     switch (order.getStatus()) {
       case PENDING ->
-          validateAndSetStatus(order, newStatus, OrderStatus.SHIPPED, OrderStatus.CANCELED);
+          validateStatusTransition(order.getStatus(), newStatus, OrderStatus.SHIPPED, OrderStatus.CANCELED);
       case SHIPPED ->
-          validateAndSetStatus(order, newStatus, OrderStatus.DELIVERED);
+          validateStatusTransition(order.getStatus(), newStatus, OrderStatus.DELIVERED);
       default -> throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
     }
 
+    setOrderStatus(order, newStatus);
     return OrderDto.fromEntity(order);
   }
 
   /**
    * 배송지를 수정합니다.
+   *
    * @param orderId 주문 ID
    * @param request 배송지 수정 요청 DTO
    * @return 수정된 주문 DTO
@@ -187,16 +195,26 @@ public class OrderService {
     }
   }
 
-  // 주문 상태 변경 가능 여부 확인 및 상태 업데이트
-  private void validateAndSetStatus(OrderEntity order, OrderStatus newStatus,
+  // 상태 검증
+  private void validateStatusTransition(OrderStatus newStatus,
       OrderStatus... allowedStatuses) {
-    if (List.of(allowedStatuses).contains(newStatus)) {
-      if (newStatus == OrderStatus.CANCELED) {
-        restoreStock(order); // 취소 시 재고 복구
-      }
-      order.setStatus(newStatus);
-    } else {
+    if (!List.of(allowedStatuses).contains(newStatus)) {
       throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+    }
+  }
+
+  // 상태 설정
+  private void setOrderStatus(OrderEntity order, OrderStatus newStatus) {
+    if (newStatus == OrderStatus.CANCELED) {
+      restoreStock(order);
+    }
+    order.setStatus(newStatus);
+  }
+
+  // 상품 상태 확인 (상품 상태가 판매중이 아닌 경우 예외)
+  private void validateProductStatus(ProductEntity product) {
+    if (!product.getStatus().equals(ProductStatus.AVAILABLE)) {
+      throw new CustomException(ErrorCode.PRODUCT_NOT_AVAILABLE);
     }
   }
 
@@ -212,13 +230,6 @@ public class OrderService {
     }
   }
 
-  // 재고량 확인
-  private void checkStockAvailability(ProductEntity product, Integer quantity) {
-    if (product.getStockQuantity() < quantity) {
-      throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
-    }
-  }
-
   // 재고 확인 및 차감
   private synchronized void checkAndReduceStock(ProductEntity product, Integer quantity) {
     // 동시성을 위해 synchronized 사용
@@ -227,13 +238,6 @@ public class OrderService {
     }
     product.setStockQuantity(product.getStockQuantity() - quantity);
     productRepository.save(product);
-  }
-
-  // 상품 상태 확인 (상품 상태가 판매중이 아닌 경우 예외)
-  private void validateProductStatus(ProductEntity product) {
-    if (!product.getStatus().equals(ProductStatus.AVAILABLE)) {
-      throw new CustomException(ErrorCode.PRODUCT_NOT_AVAILABLE);
-    }
   }
 
   // 주문 항목 생성
