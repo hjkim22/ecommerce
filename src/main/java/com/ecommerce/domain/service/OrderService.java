@@ -5,6 +5,7 @@ import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.domain.dto.order.OrderCreateDto;
 import com.ecommerce.domain.dto.order.OrderDto;
+import com.ecommerce.domain.dto.order.OrderUpdateDto;
 import com.ecommerce.domain.entity.CartEntity;
 import com.ecommerce.domain.entity.OrderEntity;
 import com.ecommerce.domain.entity.OrderItemEntity;
@@ -144,6 +145,21 @@ public class OrderService {
     }
     orderRepository.save(order);
 
+    return OrderDto.fromEntity(order);
+  }
+
+  // 배송지 수정
+  @Transactional
+  public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request) {
+    OrderEntity order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+
+    if (!order.getStatus().equals(OrderStatus.PENDING)) {
+      throw new CustomException(ErrorCode.ORDER_CANNOT_BE_MODIFIED);
+    }
+
+    order.setDeliveryAddress(request.getDeliveryAddress());
+    orderRepository.save(order);
     return OrderDto.fromEntity(order);
   }
 

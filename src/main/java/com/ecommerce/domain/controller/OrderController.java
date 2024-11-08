@@ -4,6 +4,7 @@ import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.security.JwtToken;
 import com.ecommerce.domain.dto.order.OrderCreateDto;
 import com.ecommerce.domain.dto.order.OrderDto;
+import com.ecommerce.domain.dto.order.OrderUpdateDto;
 import com.ecommerce.domain.service.OrderService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -72,5 +73,14 @@ public class OrderController {
       @PathVariable("status") OrderStatus status) {
     OrderDto orderStatus = orderService.changeOrderStatus(orderId, status);
     return ResponseEntity.ok(orderStatus);
+  }
+
+  @PreAuthorize("hasRole('ROLE_CUSTOMER')")
+  @PatchMapping("/{orderId}/deliveryAddress")
+  public ResponseEntity<OrderDto> updateDeliveryAddress(
+      @PathVariable("orderId") Long orderId,
+      @Valid @RequestBody OrderUpdateDto orderUpdateDto) {
+    OrderDto updatedOrder = orderService.updateDeliveryAddress(orderId, orderUpdateDto);
+    return ResponseEntity.ok(updatedOrder);
   }
 }
