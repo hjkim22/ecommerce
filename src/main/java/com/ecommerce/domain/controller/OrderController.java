@@ -35,12 +35,15 @@ public class OrderController {
       @Valid @RequestBody OrderCreateDto.Request request,
       @JwtToken Long customerId) {
 
+    log.info("주문 생성 요청");
     OrderCreateDto.Response response = orderService.createOrder(customerId, request);
+    log.info("주문 생성 완료 - cart ID: {}", request.getCartId());
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   @GetMapping("{orderId}")
   public ResponseEntity<OrderDto> getOrderById(@PathVariable("orderId") Long orderId) {
+    log.info("주문 조회 요청 - 주문 ID: {}", orderId);
     OrderDto order = orderService.getOrderById(orderId);
     return ResponseEntity.ok(order);
   }
@@ -48,6 +51,7 @@ public class OrderController {
   @GetMapping("/customerId/{customerId}")
   public ResponseEntity<List<OrderDto>> getOrderByCustomerId(
       @PathVariable("customerId") Long customerId) {
+    log.info("주문 목록 조회 요청 - 사용자 ID: {}", customerId);
     List<OrderDto> orders = orderService.getOrdersByCustomerId(customerId);
     return ResponseEntity.ok(orders);
   }
@@ -55,6 +59,7 @@ public class OrderController {
   @GetMapping("/status/{status}")
   public ResponseEntity<List<OrderDto>> getOrderByStatus(
       @PathVariable("status") OrderStatus status) {
+    log.info("주문 상태별 조회 요청 - 상태: {}", status);
     List<OrderDto> orders = orderService.getOrderByStatus(status);
     return ResponseEntity.ok(orders);
   }
@@ -62,6 +67,7 @@ public class OrderController {
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<OrderDto> cancelOrder(@PathVariable("orderId") Long orderId) {
+    log.info("주문 취소 요청 - 주문 ID: {}", orderId);
     OrderDto order = orderService.cancelOrder(orderId);
     return ResponseEntity.ok(order);
   }
@@ -71,6 +77,7 @@ public class OrderController {
   public ResponseEntity<OrderDto> changeOrderStatus(
       @PathVariable("orderId") Long orderId,
       @PathVariable("status") OrderStatus status) {
+    log.info("주문 상태 변경 요청 - 주문 ID: {}, 상태: {}", orderId, status);
     OrderDto orderStatus = orderService.changeOrderStatus(orderId, status);
     return ResponseEntity.ok(orderStatus);
   }
@@ -80,6 +87,7 @@ public class OrderController {
   public ResponseEntity<OrderDto> updateDeliveryAddress(
       @PathVariable("orderId") Long orderId,
       @Valid @RequestBody OrderUpdateDto orderUpdateDto) {
+    log.info("주문 배송지 변경 요청 - 주문 ID: {}", orderId);
     OrderDto updatedOrder = orderService.updateDeliveryAddress(orderId, orderUpdateDto);
     return ResponseEntity.ok(updatedOrder);
   }
