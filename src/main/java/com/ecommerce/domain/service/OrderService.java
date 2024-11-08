@@ -28,31 +28,41 @@ public class OrderService {
   private final MemberRepository memberRepository;
   private final ProductRepository productRepository;
 
-  // 주문 생성
-  @Transactional // 주문 생성이랑 장바구니 비우기 때문에 주문 생성 실패 시 장바구니가 안비워지게.
+  /**
+   * 주문 생성
+   * @param customerId 사용자 ID
+   * @param request 주문 생성 요청 DTO
+   * @return 주문 생성 응답 DTO
+   */
+  @Transactional
   public OrderCreateDto.Response createOrder(Long customerId, OrderCreateDto.Request request) {
-    // 소유권 확인
     CartEntity cart = validateCartOwnership(customerId, request.getCartId());
-    // 상품이 있는지 확인
     validateCartNotEmpty(cart);
 
-    // 항목 생성
     List<OrderItemEntity> orderItems = createOrderItem(cart);
     OrderEntity order = buildOrder(request, cart, orderItems);
-    order.addOrderItems(orderItems);
-    orderRepository.save(order);
+    order.addOrderItems(orderItems); // 주문 항목 추가
 
-    clearCart(cart); // 주문했으니 비우기
+    orderRepository.save(order);
+    clearCart(cart);
 
     return new OrderCreateDto.Response(request.getCartId(), order.getStatus(), "주문 완료");
   }
 
-  // orderId로 조회
+  /**
+   * 주문 정보 조회
+   * @param orderId 주문 ID
+   * @return 주문 DTO
+   */
   public OrderDto getOrderById(Long orderId) {
     return OrderDto.fromEntity(findOrderById(orderId));
   }
 
-  // customerId로 조회
+  /**
+   * 주문 정보 조회
+   * @param customerId 사용자 ID
+   * @return 주문 DTO 리스트
+   */
   public List<OrderDto> getOrdersByCustomerId(Long customerId) {
     validateCustomerExists(customerId);
     List<OrderEntity> orders = orderRepository.findByCustomerId(customerId);
@@ -63,12 +73,20 @@ public class OrderService {
     return orders.stream().map(OrderDto::fromEntity).toList();
   }
 
-  // 상태별 조회
+  /**
+   * 주문 정보 조회
+   * @param status 주문 상태
+   * @return 주문 DTO 리스트
+   */
   public List<OrderDto> getOrderByStatus(OrderStatus status) {
     return orderRepository.findByStatus(status).stream().map(OrderDto::fromEntity).toList();
   }
 
-  // 사용자 주문 취소
+  /**
+   * 사용자 주문 취소
+   * @param orderId 주문 ID
+   * @return 취소된 주문 DTO
+   */
   @Transactional
   public OrderDto cancelOrder(Long orderId) {
     OrderEntity order = findOrderById(orderId);
@@ -79,7 +97,12 @@ public class OrderService {
     return OrderDto.fromEntity(order);
   }
 
-  // 상태 변경
+  /**
+   * 주문 상태 변경
+   * @param orderId 주문 ID
+   * @param newStatus 새로운 주문 상태
+   * @return 변경된 주문 DTO
+   */
   @Transactional
   public OrderDto changeOrderStatus(Long orderId, OrderStatus newStatus) {
     OrderEntity order = findOrderById(orderId);
@@ -88,24 +111,30 @@ public class OrderService {
     switch (order.getStatus()) {
       case PENDING ->
           validateAndSetStatus(order, newStatus, OrderStatus.SHIPPED, OrderStatus.CANCELED);
-      case SHIPPED -> validateAndSetStatus(order, newStatus, OrderStatus.DELIVERED);
+      case SHIPPED ->
+          validateAndSetStatus(order, newStatus, OrderStatus.DELIVERED);
       default -> throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
     }
 
     return OrderDto.fromEntity(order);
   }
 
-  // 배송지 수정
+  /**
+   * 배송지를 수정합니다.
+   * @param orderId 주문 ID
+   * @param request 배송지 수정 요청 DTO
+   * @return 수정된 주문 DTO
+   */
   @Transactional
   public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request) {
     OrderEntity order = findOrderById(orderId);
-    validateOrderModifiable(order);
+    validateOrderModifiable(order); // 수정 가능 여부 확인
 
     order.setDeliveryAddress(request.getDeliveryAddress());
     return OrderDto.fromEntity(order);
   }
 
-  // ========================== 헬퍼메서드 ==========================
+  // ========================== 헬퍼 메서드 ==========================
 
   // 장바구니 소유권 확인
   private CartEntity validateCartOwnership(Long customerId, Long cartId) {
@@ -118,7 +147,7 @@ public class OrderService {
     return cart;
   }
 
-  // 장바구니 엠티 확인
+  // 장바구니 비어있는지 확인
   private void validateCartNotEmpty(CartEntity cart) {
     if (cart.getCartItems().isEmpty()) {
       throw new CustomException(ErrorCode.CART_EMPTY);
@@ -143,14 +172,14 @@ public class OrderService {
     cartRepository.save(cart);
   }
 
-  // 대기중 상태아니면 취소불가
+  // 주문 취소 가능 여부 확인 (주문이 대기중 상태가 아니면 취소 불가)
   private void validateOrderCancellable(OrderEntity order) {
     if (!order.getStatus().equals(OrderStatus.PENDING)) {
       throw new CustomException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
     }
   }
 
-  // 대기중상태 아니면 수정 불가
+  // 주문 수정 가능 여부 확인 (주문이 대기중 상태가 아니면 수정 불가)
   private void validateOrderModifiable(OrderEntity order) {
     if (!order.getStatus().equals(OrderStatus.PENDING)) {
       throw new CustomException(ErrorCode.ORDER_CANNOT_BE_MODIFIED);
@@ -170,7 +199,7 @@ public class OrderService {
     }
   }
 
-  // 취소 시 재고량 복구
+  // 주문 취소 시 재고 복구
   private void restoreStock(OrderEntity order) {
     for (OrderItemEntity orderItem : order.getOrderItems()) {
       ProductEntity product = orderItem.getProduct();
@@ -178,8 +207,6 @@ public class OrderService {
 
       // 재고 복구: 상품의 재고에 수량 더하기
       product.setStockQuantity(product.getStockQuantity() + quantityToRestore);
-
-      // 재고 정보 업데이트
       productRepository.save(product);
     }
   }
@@ -212,11 +239,13 @@ public class OrderService {
         .build();
   }
 
+  // 주문 찾기
   private OrderEntity findOrderById(Long orderId) {
     return orderRepository.findById(orderId)
         .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
   }
 
+  // 사용자 존재 여부 확인
   private void validateCustomerExists(Long customerId) {
     memberRepository.findById(customerId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
