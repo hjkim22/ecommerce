@@ -31,7 +31,6 @@ public class OrderService {
 
   /**
    * 주문 생성
-   *
    * @param customerId 사용자 ID
    * @param request    주문 생성 요청 DTO
    * @return 주문 생성 응답 DTO
@@ -53,7 +52,6 @@ public class OrderService {
 
   /**
    * 주문 정보 조회
-   *
    * @param orderId 주문 ID
    * @return 주문 DTO
    */
@@ -63,7 +61,6 @@ public class OrderService {
 
   /**
    * 주문 정보 조회
-   *
    * @param customerId 사용자 ID
    * @return 주문 DTO 리스트
    */
@@ -79,7 +76,6 @@ public class OrderService {
 
   /**
    * 주문 정보 조회
-   *
    * @param status 주문 상태
    * @return 주문 DTO 리스트
    */
@@ -89,7 +85,6 @@ public class OrderService {
 
   /**
    * 사용자 주문 취소
-   *
    * @param orderId 주문 ID
    * @return 취소된 주문 DTO
    */
@@ -105,7 +100,6 @@ public class OrderService {
 
   /**
    * 주문 상태 변경
-   *
    * @param orderId   주문 ID
    * @param newStatus 새로운 주문 상태
    * @return 변경된 주문 DTO
@@ -128,8 +122,7 @@ public class OrderService {
   }
 
   /**
-   * 배송지를 수정합니다.
-   *
+   * 배송지 수정
    * @param orderId 주문 ID
    * @param request 배송지 수정 요청 DTO
    * @return 수정된 주문 DTO
