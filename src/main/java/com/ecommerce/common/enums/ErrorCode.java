@@ -24,6 +24,7 @@ public enum ErrorCode {
 
   // 상품 관련 오류 코드
   PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "상품을 찾을 수 없습니다."),
+  PRODUCT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST.value(), "판매중인 상품이 아닙니다."),
 
   // 장바구니 관련 오류 코드
   CART_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "장바구니를 찾을 수 없습니다."),

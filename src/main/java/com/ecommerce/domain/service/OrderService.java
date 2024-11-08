@@ -2,6 +2,7 @@ package com.ecommerce.domain.service;
 
 import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.enums.ProductStatus;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.domain.dto.order.OrderCreateDto;
 import com.ecommerce.domain.dto.order.OrderDto;
@@ -159,8 +160,8 @@ public class OrderService {
     return cart.getCartItems().stream()
         .map(cartItem -> {
           ProductEntity product = cartItem.getProduct();
-          checkStockAvailability(product, cartItem.getQuantity());
-          product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
+          validateProductStatus(product);
+          checkAndReduceStock(product, cartItem.getQuantity());
           return createOrderItem(product, cartItem.getQuantity());
         })
         .toList();
@@ -215,6 +216,23 @@ public class OrderService {
   private void checkStockAvailability(ProductEntity product, Integer quantity) {
     if (product.getStockQuantity() < quantity) {
       throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
+    }
+  }
+
+  // 재고 확인 및 차감
+  private synchronized void checkAndReduceStock(ProductEntity product, Integer quantity) {
+    // 동시성을 위해 synchronized 사용
+    if (product.getStockQuantity() < quantity) {
+      throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
+    }
+    product.setStockQuantity(product.getStockQuantity() - quantity);
+    productRepository.save(product);
+  }
+
+  // 상품 상태 확인 (상품 상태가 판매중이 아닌 경우 예외)
+  private void validateProductStatus(ProductEntity product) {
+    if (!product.getStatus().equals(ProductStatus.AVAILABLE)) {
+      throw new CustomException(ErrorCode.PRODUCT_NOT_AVAILABLE);
     }
   }
 
