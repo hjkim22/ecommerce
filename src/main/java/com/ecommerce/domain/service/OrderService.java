@@ -31,119 +31,66 @@ public class OrderService {
   // 주문 생성
   @Transactional // 주문 생성이랑 장바구니 비우기 때문에 주문 생성 실패 시 장바구니가 안비워지게.
   public OrderCreateDto.Response createOrder(Long customerId, OrderCreateDto.Request request) {
-    CartEntity cart = cartRepository.findById(request.getCartId())
-        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+    // 소유권 확인
+    CartEntity cart = validateCartOwnership(customerId, request.getCartId());
+    // 상품이 있는지 확인
+    validateCartNotEmpty(cart);
 
-    // 장바구니, 사용자 일치 체크
-    if (!cart.getCustomer().getId().equals(customerId)) {
-      throw new CustomException(ErrorCode.INVALID_CUSTOMER_ACCESS);
-    }
-    // 장바구니 비어있는지
-    if (cart.getCartItems().isEmpty()) {
-      throw new CustomException(ErrorCode.CART_EMPTY);
-    }
-
-    List<OrderItemEntity> orderItems = cart.getCartItems().stream()
-        .map(cartItem -> {
-          ProductEntity product = cartItem.getProduct();
-
-          if (product.getStockQuantity() < cartItem.getQuantity()) {
-            throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
-          }
-
-          product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
-
-          return createOrderItem(product, cartItem.getQuantity());
-        })
-        .toList();
-
-    OrderEntity order = createOrderEntity(request, cart, orderItems);
+    // 항목 생성
+    List<OrderItemEntity> orderItems = createOrderItem(cart);
+    OrderEntity order = buildOrder(request, cart, orderItems);
     order.addOrderItems(orderItems);
     orderRepository.save(order);
 
-    cart.getCartItems().clear(); // 주문 완료 시 장바구니 clear
-    cartRepository.save(cart); // 더티체킹으로 생략 가능한지 확인
+    clearCart(cart); // 주문했으니 비우기
 
     return new OrderCreateDto.Response(request.getCartId(), order.getStatus(), "주문 완료");
   }
 
   // orderId로 조회
   public OrderDto getOrderById(Long orderId) {
-    OrderEntity order = orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
-    return OrderDto.fromEntity(order);
+    return OrderDto.fromEntity(findOrderById(orderId));
   }
 
   // customerId로 조회
   public List<OrderDto> getOrdersByCustomerId(Long customerId) {
-    memberRepository.findById(customerId)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+    validateCustomerExists(customerId);
     List<OrderEntity> orders = orderRepository.findByCustomerId(customerId);
+
     if (orders.isEmpty()) {
       throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
     }
-
     return orders.stream().map(OrderDto::fromEntity).toList();
   }
 
   // 상태별 조회
   public List<OrderDto> getOrderByStatus(OrderStatus status) {
-    List<OrderEntity> orders = orderRepository.findByStatus(status);
-    return orders.stream().map(OrderDto::fromEntity).toList();
+    return orderRepository.findByStatus(status).stream().map(OrderDto::fromEntity).toList();
   }
 
   // 사용자 주문 취소
   @Transactional
   public OrderDto cancelOrder(Long orderId) {
-    OrderEntity order = orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    OrderEntity order = findOrderById(orderId);
+    validateOrderCancellable(order);
 
-    // 대기중인 경우만 취소 가능
-    if (!order.getStatus().equals(OrderStatus.PENDING)) {
-      throw new CustomException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
-    }
     order.setStatus(OrderStatus.CANCELED);
-
-    // 상품 재고 복구
-    for (OrderItemEntity orderItem : order.getOrderItems()) {
-      ProductEntity product = orderItem.getProduct();
-      product.setStockQuantity(product.getStockQuantity() + orderItem.getQuantity());
-    }
-    orderRepository.save(order);
-
+    restoreStock(order); // 재고 복구
     return OrderDto.fromEntity(order);
   }
 
   // 상태 변경
   @Transactional
   public OrderDto changeOrderStatus(Long orderId, OrderStatus newStatus) {
-    OrderEntity order = orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    OrderEntity order = findOrderById(orderId);
 
-    // 변경 및 재고 복구
-    if (order.getStatus().equals(OrderStatus.PENDING)) { // == 쓸지 이퀄쓸지 확인
-      // 대기중은 배송중이나 취소로만 변경가능
-      if (newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.CANCELED) {
-        if (newStatus == OrderStatus.CANCELED) {
-          restoreStock(order);
-        }
-        order.setStatus(newStatus);
-      } else {
-        throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
-      }
-    } else if (order.getStatus() == OrderStatus.SHIPPED) {
-      // 배송중일떄는 배송완료로만 변경가능
-      if (newStatus == OrderStatus.DELIVERED) {
-        order.setStatus(newStatus);
-      } else {
-        throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
-      }
-    } else {
-      // 이미 배송완료나 취소 상태인 경우 변경 불가
-      throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+    // 상태별 변경 가능 여부 확인
+    switch (order.getStatus()) {
+      case PENDING ->
+          validateAndSetStatus(order, newStatus, OrderStatus.SHIPPED, OrderStatus.CANCELED);
+      case SHIPPED -> validateAndSetStatus(order, newStatus, OrderStatus.DELIVERED);
+      default -> throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
     }
-    orderRepository.save(order);
 
     return OrderDto.fromEntity(order);
   }
@@ -151,29 +98,96 @@ public class OrderService {
   // 배송지 수정
   @Transactional
   public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request) {
-    OrderEntity order = orderRepository.findById(orderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    OrderEntity order = findOrderById(orderId);
+    validateOrderModifiable(order);
 
+    order.setDeliveryAddress(request.getDeliveryAddress());
+    return OrderDto.fromEntity(order);
+  }
+
+  // ========================== 헬퍼메서드 ==========================
+
+  // 장바구니 소유권 확인
+  private CartEntity validateCartOwnership(Long customerId, Long cartId) {
+    CartEntity cart = cartRepository.findById(cartId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
+
+    if (!cart.getCustomer().getId().equals(customerId)) {
+      throw new CustomException(ErrorCode.INVALID_CUSTOMER_ACCESS);
+    }
+    return cart;
+  }
+
+  // 장바구니 엠티 확인
+  private void validateCartNotEmpty(CartEntity cart) {
+    if (cart.getCartItems().isEmpty()) {
+      throw new CustomException(ErrorCode.CART_EMPTY);
+    }
+  }
+
+  // 주문 항목 생성, 재고량 반영
+  private List<OrderItemEntity> createOrderItem(CartEntity cart) {
+    return cart.getCartItems().stream()
+        .map(cartItem -> {
+          ProductEntity product = cartItem.getProduct();
+          checkStockAvailability(product, cartItem.getQuantity());
+          product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
+          return createOrderItem(product, cartItem.getQuantity());
+        })
+        .toList();
+  }
+
+  // 장바구니 비우기
+  private void clearCart(CartEntity cart) {
+    cart.getCartItems().clear();
+    cartRepository.save(cart);
+  }
+
+  // 대기중 상태아니면 취소불가
+  private void validateOrderCancellable(OrderEntity order) {
+    if (!order.getStatus().equals(OrderStatus.PENDING)) {
+      throw new CustomException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
+    }
+  }
+
+  // 대기중상태 아니면 수정 불가
+  private void validateOrderModifiable(OrderEntity order) {
     if (!order.getStatus().equals(OrderStatus.PENDING)) {
       throw new CustomException(ErrorCode.ORDER_CANNOT_BE_MODIFIED);
     }
+  }
 
-    order.setDeliveryAddress(request.getDeliveryAddress());
-    orderRepository.save(order);
-    return OrderDto.fromEntity(order);
+  // 주문 상태 변경 가능 여부 확인 및 상태 업데이트
+  private void validateAndSetStatus(OrderEntity order, OrderStatus newStatus,
+      OrderStatus... allowedStatuses) {
+    if (List.of(allowedStatuses).contains(newStatus)) {
+      if (newStatus == OrderStatus.CANCELED) {
+        restoreStock(order); // 취소 시 재고 복구
+      }
+      order.setStatus(newStatus);
+    } else {
+      throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+    }
   }
 
   // 취소 시 재고량 복구
   private void restoreStock(OrderEntity order) {
     for (OrderItemEntity orderItem : order.getOrderItems()) {
       ProductEntity product = orderItem.getProduct();
-      int quantityToRestore = orderItem.getQuantity();
+      Integer quantityToRestore = orderItem.getQuantity();
 
       // 재고 복구: 상품의 재고에 수량 더하기
       product.setStockQuantity(product.getStockQuantity() + quantityToRestore);
 
       // 재고 정보 업데이트
       productRepository.save(product);
+    }
+  }
+
+  // 재고량 확인
+  private void checkStockAvailability(ProductEntity product, Integer quantity) {
+    if (product.getStockQuantity() < quantity) {
+      throw new CustomException(ErrorCode.QUANTITY_EXCEEDS_STOCK);
     }
   }
 
@@ -186,8 +200,8 @@ public class OrderService {
         .build();
   }
 
-  // 엔티티 생성 메서드
-  private static OrderEntity createOrderEntity(OrderCreateDto.Request request, CartEntity cart,
+  // 주문 엔티티 생성 메서드
+  private static OrderEntity buildOrder(OrderCreateDto.Request request, CartEntity cart,
       List<OrderItemEntity> orderItems) {
     return OrderEntity.builder()
         .customer(cart.getCustomer())
@@ -196,5 +210,15 @@ public class OrderService {
         .orderItems(orderItems)
         .cart(cart)
         .build();
+  }
+
+  private OrderEntity findOrderById(Long orderId) {
+    return orderRepository.findById(orderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  private void validateCustomerExists(Long customerId) {
+    memberRepository.findById(customerId)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
 }
