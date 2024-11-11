@@ -19,6 +19,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,8 +98,12 @@ public class OrderService {
    * @return 취소된 주문 DTO
    */
   @Transactional
-  public OrderDto cancelOrder(Long orderId) {
+  public OrderDto cancelOrder(Long orderId, Long customerId) {
     OrderEntity order = findOrderById(orderId);
+
+    if (!isAdmin() && !order.getCustomer().getId().equals(customerId)) {
+      throw new CustomException(ErrorCode.UNAUTHORIZED_CUSTOMER);
+    }
     validateOrderCancellable(order);
 
     order.setStatus(OrderStatus.CANCELED);
@@ -136,15 +141,25 @@ public class OrderService {
    * @return 수정된 주문 DTO
    */
   @Transactional
-  public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request) {
+  public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request, Long customerId) {
     OrderEntity order = findOrderById(orderId);
-    validateOrderModifiable(order); // 수정 가능 여부 확인
 
+    if (!isAdmin() && !order.getCustomer().getId().equals(customerId)) {
+      throw new CustomException(ErrorCode.UNAUTHORIZED_CUSTOMER);
+    }
+
+    validateOrderModifiable(order); // 수정 가능 여부 확인
     order.setDeliveryAddress(request.getDeliveryAddress());
     return OrderDto.fromEntity(order);
   }
 
   // ========================== 헬퍼 메서드 ==========================
+
+  // 어드민 확인
+  private boolean isAdmin() {
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+  }
 
   // 장바구니 소유권 확인
   private CartEntity validateCartOwnership(Long customerId, Long cartId) {

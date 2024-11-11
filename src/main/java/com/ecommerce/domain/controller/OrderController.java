@@ -77,15 +77,16 @@ public class OrderController {
     return ResponseEntity.ok(orders);
   }
 
-  // TODO: 본인 및 ADMIN
+  @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CUSTOMER')")
   @PatchMapping("/{orderId}/cancel")
-  public ResponseEntity<OrderDto> cancelOrder(@PathVariable("orderId") Long orderId) {
+  public ResponseEntity<OrderDto> cancelOrder(@PathVariable("orderId") Long orderId,
+      @JwtToken Long customerId) {
     log.info("주문 취소 요청 - 주문 ID: {}", orderId);
-    OrderDto order = orderService.cancelOrder(orderId);
+    OrderDto order = orderService.cancelOrder(orderId, customerId);
     return ResponseEntity.ok(order);
   }
 
-  // TODO: 본인 및 ADMIN
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PatchMapping("/{orderId}/status/{status}")
   public ResponseEntity<OrderDto> changeOrderStatus(
       @PathVariable("orderId") Long orderId,
@@ -95,13 +96,14 @@ public class OrderController {
     return ResponseEntity.ok(orderStatus);
   }
 
-  // TODO: 본인 및 ADMIN
+  @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CUSTOMER')")
   @PatchMapping("/{orderId}/deliveryAddress")
   public ResponseEntity<OrderDto> updateDeliveryAddress(
       @PathVariable("orderId") Long orderId,
-      @Valid @RequestBody OrderUpdateDto orderUpdateDto) {
+      @Valid @RequestBody OrderUpdateDto orderUpdateDto,
+      @JwtToken Long customerId) {
     log.info("주문 배송지 변경 요청 - 주문 ID: {}", orderId);
-    OrderDto updatedOrder = orderService.updateDeliveryAddress(orderId, orderUpdateDto);
+    OrderDto updatedOrder = orderService.updateDeliveryAddress(orderId, orderUpdateDto, customerId);
     return ResponseEntity.ok(updatedOrder);
   }
 }
