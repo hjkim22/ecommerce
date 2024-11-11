@@ -14,6 +14,7 @@ import com.ecommerce.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -137,7 +138,7 @@ public class ProductService {
   @Transactional
   public void deleteProduct(Long id, Long sellerId) {
     ProductEntity product = validateProductAndAccess(id, sellerId);
-    productRepository.delete(product);
+    product.setStatus(ProductStatus.DELETED);
   }
 
   /**
@@ -166,10 +167,16 @@ public class ProductService {
   private ProductEntity validateProductAndAccess(Long id, Long sellerId) {
     ProductEntity product = productRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
-    if (!product.getSeller().getId().equals(sellerId)) {
+    if (!isAdmin() && !product.getSeller().getId().equals(sellerId)) {
       throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
     return product;
+  }
+
+  // 어드민 확인
+  private boolean isAdmin() {
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
   }
 
   /**

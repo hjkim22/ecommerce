@@ -86,7 +86,7 @@ public class ProductController {
     return ResponseEntity.ok(products);
   }
 
-  // TODO: 본인 및 ADMIN
+  @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
   @PutMapping("/{productId}")
   public ResponseEntity<ProductDto> updateProduct(
       @PathVariable("productId") Long id,
@@ -97,7 +97,7 @@ public class ProductController {
     return ResponseEntity.ok(updatedProduct);
   }
 
-  // TODO: 본인 및 ADMIN
+  @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
   @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long id,
       @JwtToken Long sellerId) {
