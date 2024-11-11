@@ -40,4 +40,14 @@ public class ProductEntity extends BaseTimeEntity {
 
   @Enumerated(EnumType.STRING)
   private ProductStatus status;
+
+  public void setStockQuantity(Integer stockQuantity) {
+    this.stockQuantity = stockQuantity;
+
+    if (stockQuantity == 0) {
+      this.status = ProductStatus.OUT_OF_STOCK; // 품절 상태로 변경
+    } else if (stockQuantity > 0) {
+      this.status = ProductStatus.AVAILABLE;
+    }
+  }
 }
