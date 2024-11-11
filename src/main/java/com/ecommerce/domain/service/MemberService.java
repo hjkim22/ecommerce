@@ -11,11 +11,10 @@ import com.ecommerce.domain.dto.member.SignUpDto;
 import com.ecommerce.domain.dto.member.SignUpDto.Request;
 import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.repository.MemberRepository;
-import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -100,23 +99,24 @@ public class MemberService {
   }
 
   /**
-   * 최근 가입한 회원 조회
-   * @param limit 조회할 회원 수
-   * @return 최근 가입한 회원 정보 리스트 DTO
+   * 회원 리스트 조회
+   * @param role 회원 역할 (SELLER, CUSTOMER)
+   * @param pageable 페이징 정보
+   * @return 역할별 회원 목록
    */
-  public List<MemberDto> findRecentMembers(int limit) {
-    final int MAX_LIMIT = 50;
-    if (limit > MAX_LIMIT) {
-      log.warn("최대값({}) 초과하여 기본값 10으로 조회", MAX_LIMIT);
-      limit = 10; // 기본값으로 대체
-    }
+  public Page<MemberDto> getMemberByRole(Role role, Pageable pageable) {
+    Page<MemberEntity> members = memberRepository.findMemberByRole(role, pageable);
+    return members.map(MemberDto::fromEntity);
+  }
 
-    Pageable pageable = PageRequest.of(0, limit);
-    List<MemberEntity> recentMembers = memberRepository.findAllByOrderByCreatedAtDesc(pageable);
-    log.info("최근 가입한 회원 {}명 조회", recentMembers.size());
-    return recentMembers.stream()
-        .map(MemberDto::fromEntity)
-        .toList();
+  /**
+   * 회원 리스트 조회
+   * @param pageable 페이징 정보
+   * @return 회원 목록 - 최신순
+   */
+  public Page<MemberDto> getMembers(Pageable pageable) {
+    Page<MemberEntity> members = memberRepository.findAllByOrderByCreatedAtDesc(pageable);
+    return members.map(MemberDto::fromEntity);
   }
 
   /**

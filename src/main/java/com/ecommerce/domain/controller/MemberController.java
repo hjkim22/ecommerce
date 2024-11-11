@@ -2,6 +2,7 @@ package com.ecommerce.domain.controller;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
+import com.ecommerce.common.enums.Role;
 import com.ecommerce.domain.dto.email.EmailVerificationDto;
 import com.ecommerce.domain.dto.email.EmailVerificationRequestDto;
 import com.ecommerce.domain.dto.member.MemberDto;
@@ -12,9 +13,10 @@ import com.ecommerce.domain.service.EmailService;
 import com.ecommerce.domain.service.MemberService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +25,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -86,13 +87,20 @@ public class MemberController {
     return ResponseEntity.ok(memberService.getMemberByEmail(email));
   }
 
-  // 최근 가입된 회원 조회
-  @GetMapping("/recent")
-  public ResponseEntity<List<MemberDto>> getRecentMembers(
-      @RequestParam(defaultValue = "10") int limit) {
-    log.info("최근 가입된 회원 조회 요청 - {}", limit);
-    List<MemberDto> recentMembers = memberService.findRecentMembers(limit);
-    return ResponseEntity.ok(recentMembers);
+  // 회원조회 role
+  @GetMapping("/role")
+  public ResponseEntity<Page<MemberDto>> getMemberByRole(Role role, Pageable pageable) {
+    log.info("회원 정보 조회 요청 - Role: {}", role);
+    Page<MemberDto> members = memberService.getMemberByRole(role, pageable);
+    return ResponseEntity.ok(members);
+  }
+
+  // 회원조회 최신순
+  @GetMapping("/findAll")
+  public ResponseEntity<Page<MemberDto>> getMembers(Pageable pageable) {
+    log.info("전체 회원 정보 조회 요청 - 최신순");
+    Page<MemberDto> members = memberService.getMembers(pageable);
+    return ResponseEntity.ok(members);
   }
 
   // 업데이트

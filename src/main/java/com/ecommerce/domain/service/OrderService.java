@@ -17,6 +17,8 @@ import com.ecommerce.domain.repository.OrderRepository;
 import com.ecommerce.domain.repository.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,14 +66,14 @@ public class OrderService {
    * @param customerId 사용자 ID
    * @return 주문 DTO 리스트
    */
-  public List<OrderDto> getOrdersByCustomerId(Long customerId) {
+  public Page<OrderDto> getOrdersByCustomerId(Long customerId, Pageable pageable) {
     validateCustomerExists(customerId);
-    List<OrderEntity> orders = orderRepository.findByCustomerId(customerId);
+    Page<OrderEntity> orders = orderRepository.findByCustomerId(customerId, pageable);
 
     if (orders.isEmpty()) {
       throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
     }
-    return orders.stream().map(OrderDto::fromEntity).toList();
+    return orders.map(OrderDto::fromEntity);
   }
 
   /**
@@ -79,8 +81,14 @@ public class OrderService {
    * @param status 주문 상태
    * @return 주문 DTO 리스트
    */
-  public List<OrderDto> getOrderByStatus(OrderStatus status) {
-    return orderRepository.findByStatus(status).stream().map(OrderDto::fromEntity).toList();
+  public Page<OrderDto> getOrderByStatus(OrderStatus status, Pageable pageable) {
+    Page<OrderEntity> orders = orderRepository.findByStatus(status, pageable);
+    return orders.map(OrderDto::fromEntity);
+  }
+
+  public Page<OrderDto> getOrders(Pageable pageable) {
+    Page<OrderEntity> orders = orderRepository.findAll(pageable);
+    return orders.map(OrderDto::fromEntity);
   }
 
   /**

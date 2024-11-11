@@ -11,8 +11,9 @@ import com.ecommerce.domain.entity.MemberEntity;
 import com.ecommerce.domain.entity.ProductEntity;
 import com.ecommerce.domain.repository.MemberRepository;
 import com.ecommerce.domain.repository.ProductRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,12 +54,10 @@ public class ProductService {
    * @param name 상품명
    * @return 상품 DTO 리스트
    */
-  public List<ProductDto> getProductByName(String name) {
-    List<ProductEntity> products = productRepository.findByProductNameContaining(name);
+  public Page<ProductDto> getProductByName(String name, Pageable pageable) {
+    Page<ProductEntity> products = productRepository.findByProductNameContaining(name, pageable);
 
-    return products.stream()
-        .map(ProductDto::fromEntity)
-        .toList(); // 조회된 상품이 없더라도 빈 리스트를 반환
+    return products.map(ProductDto::fromEntity);
   }
 
   /**
@@ -66,19 +65,17 @@ public class ProductService {
    * @param id 판매자 ID
    * @return 상품 DTO 리스트
    */
-  public List<ProductDto> getProductBySellerId(Long id) {
+  public Page<ProductDto> getProductBySellerId(Long id, Pageable pageable) {
     memberRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    List<ProductEntity> products = productRepository.findBySellerId(id);
+    Page<ProductEntity> products = productRepository.findBySellerId(id, pageable);
 
     if (products.isEmpty()) {
       throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
     }
 
-    return products.stream()
-        .map(ProductDto::fromEntity)
-        .toList();
+    return products.map(ProductDto::fromEntity);
   }
 
   /**
@@ -86,10 +83,19 @@ public class ProductService {
    * @param status 상품 상태
    * @return 상품 DTO 리스트
    */
-  public List<ProductDto> getProductByStatus(ProductStatus status) {
-    return productRepository.findByStatus(status).stream()
-        .map(ProductDto::fromEntity)
-        .toList();
+  public Page<ProductDto> getProductByStatus(ProductStatus status, Pageable pageable) {
+    Page<ProductEntity> products = productRepository.findByStatus(status, pageable);
+    return products.map(ProductDto::fromEntity);
+  }
+
+  /**
+   * 상품 리스트 조회
+   * @param pageable 페이징 정보
+   * @return 상품 DTO 리스트
+   */
+  public Page<ProductDto> getProducts(Pageable pageable) {
+    Page<ProductEntity> products = productRepository.findAll(pageable);
+    return products.map(ProductDto::fromEntity);
   }
 
   /**

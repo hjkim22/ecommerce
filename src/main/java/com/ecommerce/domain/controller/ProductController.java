@@ -9,10 +9,10 @@ import com.ecommerce.domain.dto.product.ProductDto;
 import com.ecommerce.domain.dto.product.ProductUpdateDto;
 import com.ecommerce.domain.service.ProductService;
 import jakarta.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -52,27 +52,36 @@ public class ProductController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<List<ProductDto>> searchProducts(
+  public ResponseEntity<Page<ProductDto>> searchProducts(
       @RequestParam(required = false) String name,
       @RequestParam(required = false) Long sellerId,
-      @RequestParam(required = false) ProductStatus status) {
-    log.info("상품 검색 요청");
-    List<ProductDto> products = new ArrayList<>();
+      @RequestParam(required = false) ProductStatus status,
+      Pageable pageable) {
+    log.info("상품 정보 조회 요청");
+
+    Page<ProductDto> products = Page.empty();
 
     if (name != null && !name.isEmpty()) {
-      products.addAll(productService.getProductByName(name));
+      products = productService.getProductByName(name, pageable);
     }
     if (sellerId != null) {
-      products.addAll(productService.getProductBySellerId(sellerId));
+      products = productService.getProductBySellerId(sellerId, pageable);
     }
     if (status != null) {
-      products.addAll(productService.getProductByStatus(status));
+      products = productService.getProductByStatus(status, pageable);
     }
     if (products.isEmpty()) {
       log.info("상품 검색 결과 없음");
       return ResponseEntity.noContent().build(); // 빈 리스트일 경우 204 No Content 반환
     }
 
+    return ResponseEntity.ok(products);
+  }
+
+  @GetMapping("/findAll")
+  public ResponseEntity<Page<ProductDto>> getProducts(Pageable pageable) {
+    log.info("전체 상품 정보 조회 요청");
+    Page<ProductDto> products = productService.getProducts(pageable);
     return ResponseEntity.ok(products);
   }
 
