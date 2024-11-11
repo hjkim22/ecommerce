@@ -37,6 +37,11 @@ public class MemberController {
   private final MemberService memberService;
   private final EmailService emailService;
 
+  private static final String ROLE_ACCESS_CONDITION =
+      "hasRole('ROLE_ADMIN') or " +
+          "(hasRole('ROLE_CUSTOMER') and #memberId == T(java.lang.Long).parseLong(principal.username)) or " +
+          "(hasRole('ROLE_SELLER') and #memberId == T(java.lang.Long).parseLong(principal.username))";
+
   // 회원가입
   @PostMapping("/sign-up")
   public ResponseEntity<SignUpDto.Response> signUp(@Valid @RequestBody SignUpDto.Request request) {
@@ -109,7 +114,7 @@ public class MemberController {
   }
 
   // 업데이트
-  // TODO: 본인 및 ADMIN
+  @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PutMapping("/{memberId}")
   public ResponseEntity<MemberDto> updateMember(
       @PathVariable("memberId") Long memberId,
@@ -119,7 +124,7 @@ public class MemberController {
   }
 
   // 삭제
-  // TODO: 본인 및 ADMIN
+  @PreAuthorize(ROLE_ACCESS_CONDITION)
   @DeleteMapping("/{memberId}")
   public ResponseEntity<Void> deleteMember(@PathVariable Long memberId) {
     log.info("회원 삭제 요청 - ID: {}", memberId);
