@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -61,6 +62,10 @@ public class MemberEntity extends BaseTimeEntity implements UserDetails {
   // ProductEntity 와의 관계 설정 / MemberEntity 삭제 시 관련된 ProductEntity 함께 삭제
   @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ProductEntity> products;
+
+  // CartEntity 와의 관계 설정 / MemberEntity 삭제 시 관련된 CartEntity 함께 삭제
+  @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+  private CartEntity cart;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
