@@ -43,6 +43,7 @@ public class OrderController {
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("{orderId}")
   public ResponseEntity<OrderDto> getOrderById(@PathVariable("orderId") Long orderId) {
     log.info("주문 조회 요청 - 주문 ID: {}", orderId);
@@ -50,6 +51,7 @@ public class OrderController {
     return ResponseEntity.ok(order);
   }
 
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/orders")
   public ResponseEntity<Page<OrderDto>> getOrderByCustomerId(@RequestParam Long customerId,
       Pageable pageable) {
@@ -58,6 +60,7 @@ public class OrderController {
     return ResponseEntity.ok(orders);
   }
 
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/status/{status}")
   public ResponseEntity<Page<OrderDto>> getOrderByStatus(@PathVariable("status") OrderStatus status,
       Pageable pageable) {
@@ -66,6 +69,7 @@ public class OrderController {
     return ResponseEntity.ok(orders);
   }
 
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/findAll")
   public ResponseEntity<Page<OrderDto>> getOrders(Pageable pageable) {
     log.info("모든 주문 목록 조회");
@@ -73,7 +77,7 @@ public class OrderController {
     return ResponseEntity.ok(orders);
   }
 
-  @PreAuthorize("hasRole('ROLE_CUSTOMER')")
+  // TODO: 본인 및 ADMIN
   @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<OrderDto> cancelOrder(@PathVariable("orderId") Long orderId) {
     log.info("주문 취소 요청 - 주문 ID: {}", orderId);
@@ -81,7 +85,7 @@ public class OrderController {
     return ResponseEntity.ok(order);
   }
 
-  // TODO: admin 권한
+  // TODO: 본인 및 ADMIN
   @PatchMapping("/{orderId}/status/{status}")
   public ResponseEntity<OrderDto> changeOrderStatus(
       @PathVariable("orderId") Long orderId,
@@ -91,7 +95,7 @@ public class OrderController {
     return ResponseEntity.ok(orderStatus);
   }
 
-  @PreAuthorize("hasRole('ROLE_CUSTOMER')")
+  // TODO: 본인 및 ADMIN
   @PatchMapping("/{orderId}/deliveryAddress")
   public ResponseEntity<OrderDto> updateDeliveryAddress(
       @PathVariable("orderId") Long orderId,

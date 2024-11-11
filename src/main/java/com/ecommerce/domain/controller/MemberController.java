@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -74,6 +75,7 @@ public class MemberController {
   }
 
   // 회원조회 id
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{memberId}")
   public ResponseEntity<MemberDto> getMemberById(@PathVariable("memberId") Long memberId) {
     log.info("회원 정보 조회 요청 - ID: {}", memberId);
@@ -81,6 +83,7 @@ public class MemberController {
   }
 
   // 회원조회 email
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/email/{email}") // id 와 url 충돌방지
   public ResponseEntity<MemberDto> getMemberByEmail(@PathVariable("email") String email) {
     log.info("회원 정보 조회 요청 - 이메일: {}", email);
@@ -88,6 +91,7 @@ public class MemberController {
   }
 
   // 회원조회 role
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/role")
   public ResponseEntity<Page<MemberDto>> getMemberByRole(Role role, Pageable pageable) {
     log.info("회원 정보 조회 요청 - Role: {}", role);
@@ -96,6 +100,7 @@ public class MemberController {
   }
 
   // 회원조회 최신순
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/findAll")
   public ResponseEntity<Page<MemberDto>> getMembers(Pageable pageable) {
     log.info("전체 회원 정보 조회 요청 - 최신순");
@@ -104,6 +109,7 @@ public class MemberController {
   }
 
   // 업데이트
+  // TODO: 본인 및 ADMIN
   @PutMapping("/{memberId}")
   public ResponseEntity<MemberDto> updateMember(
       @PathVariable("memberId") Long memberId,
@@ -113,6 +119,7 @@ public class MemberController {
   }
 
   // 삭제
+  // TODO: 본인 및 ADMIN
   @DeleteMapping("/{memberId}")
   public ResponseEntity<Void> deleteMember(@PathVariable Long memberId) {
     log.info("회원 삭제 요청 - ID: {}", memberId);

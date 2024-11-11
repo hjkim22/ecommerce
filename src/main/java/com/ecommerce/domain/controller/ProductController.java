@@ -33,7 +33,7 @@ public class ProductController {
 
   private final ProductService productService;
 
-  @PreAuthorize("hasRole('ROLE_SELLER')")
+  @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
   @PostMapping
   public ResponseEntity<ProductCreateDto.Response> createProduct(
       @Valid @RequestBody ProductCreateDto.Request request,
@@ -44,6 +44,7 @@ public class ProductController {
     return ResponseEntity.status(CREATED).body(newProduct);
   }
 
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{productId}")
   public ResponseEntity<ProductDto> getProductById(@PathVariable("productId") Long id) {
     log.info("상품 정보 조회 요청 - ID: {}", id);
@@ -85,7 +86,7 @@ public class ProductController {
     return ResponseEntity.ok(products);
   }
 
-  @PreAuthorize("hasRole('ROLE_SELLER')")
+  // TODO: 본인 및 ADMIN
   @PutMapping("/{productId}")
   public ResponseEntity<ProductDto> updateProduct(
       @PathVariable("productId") Long id,
@@ -96,7 +97,7 @@ public class ProductController {
     return ResponseEntity.ok(updatedProduct);
   }
 
-  @PreAuthorize("hasRole('ROLE_SELLER')")
+  // TODO: 본인 및 ADMIN
   @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long id,
       @JwtToken Long sellerId) {

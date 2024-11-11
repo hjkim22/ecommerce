@@ -40,6 +40,7 @@ public class CartController {
   }
 
   // cartId 조회
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{cartId}")
   public ResponseEntity<CartDto> getCartById(@PathVariable("cartId") Long id) {
     log.info("장바구니 조회 요청 - 장바구니 ID: {}", id);
@@ -48,6 +49,7 @@ public class CartController {
   }
 
   // customerId 조회
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/customerId/{customerId}")
   public ResponseEntity<CartDto> getCartByCustomerId(@PathVariable("customerId") Long id) {
     log.info("장바구니 조회 요청 - 사용자 ID: {}", id);
