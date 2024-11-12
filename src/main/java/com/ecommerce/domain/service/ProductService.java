@@ -2,6 +2,7 @@ package com.ecommerce.domain.service;
 
 import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.ProductStatus;
+import com.ecommerce.common.enums.Role;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.domain.dto.product.ProductCreateDto;
 import com.ecommerce.domain.dto.product.ProductCreateDto.Request;
@@ -44,8 +45,7 @@ public class ProductService {
    * @return 상품 DTO
    */
   public ProductDto getProductById(Long id) {
-    ProductEntity product = productRepository.findById(id)
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    ProductEntity product = findProductById(id);
 
     return ProductDto.fromEntity(product);
   }
@@ -56,9 +56,7 @@ public class ProductService {
    * @return 상품 DTO 리스트
    */
   public Page<ProductDto> getProductByName(String name, Pageable pageable) {
-    Page<ProductEntity> products = productRepository.findByProductNameContaining(name, pageable);
-
-    return products.map(ProductDto::fromEntity);
+    return getProductPage(productRepository.findByProductNameContaining(name, pageable));
   }
 
   /**
@@ -69,14 +67,7 @@ public class ProductService {
   public Page<ProductDto> getProductBySellerId(Long id, Pageable pageable) {
     memberRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-    Page<ProductEntity> products = productRepository.findBySellerId(id, pageable);
-
-    if (products.isEmpty()) {
-      throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
-    }
-
-    return products.map(ProductDto::fromEntity);
+    return getProductPage(productRepository.findBySellerId(id, pageable));
   }
 
   /**
@@ -85,8 +76,7 @@ public class ProductService {
    * @return 상품 DTO 리스트
    */
   public Page<ProductDto> getProductByStatus(ProductStatus status, Pageable pageable) {
-    Page<ProductEntity> products = productRepository.findByStatus(status, pageable);
-    return products.map(ProductDto::fromEntity);
+    return getProductPage(productRepository.findByStatus(status, pageable));
   }
 
   /**
@@ -95,8 +85,7 @@ public class ProductService {
    * @return 상품 DTO 리스트
    */
   public Page<ProductDto> getProducts(Pageable pageable) {
-    Page<ProductEntity> products = productRepository.findAll(pageable);
-    return products.map(ProductDto::fromEntity);
+    return getProductPage(productRepository.findAll(pageable));
   }
 
   /**
@@ -109,23 +98,7 @@ public class ProductService {
   @Transactional
   public ProductDto updateProduct(Long id, ProductUpdateDto request, Long sellerId) {
     ProductEntity product = validateProductAndAccess(id, sellerId); // 상품 및 접근 유효성 검사
-
-    // 요청 데이터에 따라 상품 정보 업데이트
-    if (request.getProductName() != null) {
-      product.setProductName(request.getProductName());
-    }
-    if (request.getDescription() != null) {
-      product.setDescription(request.getDescription());
-    }
-    if (request.getPrice() != null) {
-      product.setPrice(request.getPrice());
-    }
-    if (request.getStockQuantity() != null) {
-      product.setStockQuantity(request.getStockQuantity());
-    }
-    if (request.getStatus() != null) {
-      product.setStatus(request.getStatus());
-    }
+    updateProductFields(request, product);
 
     return ProductDto.fromEntity(product);
   }
@@ -139,6 +112,17 @@ public class ProductService {
   public void deleteProduct(Long id, Long sellerId) {
     ProductEntity product = validateProductAndAccess(id, sellerId);
     product.setStatus(ProductStatus.DELETED);
+  }
+
+  // ========================== 헬퍼 메서드 ==========================
+
+  private ProductEntity findProductById(Long id) {
+    return productRepository.findById(id)
+        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+  }
+
+  private Page<ProductDto> getProductPage(Page<ProductEntity> products) {
+    return products.map(ProductDto::fromEntity);
   }
 
   /**
@@ -165,8 +149,7 @@ public class ProductService {
    * @return 유효한 상품 엔티티
    */
   private ProductEntity validateProductAndAccess(Long id, Long sellerId) {
-    ProductEntity product = productRepository.findById(id)
-        .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+    ProductEntity product = findProductById(id);
     if (!isAdmin() && !product.getSeller().getId().equals(sellerId)) {
       throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
@@ -176,7 +159,7 @@ public class ProductService {
   // 어드민 확인
   private boolean isAdmin() {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Role.ADMIN.name()));
   }
 
   /**
@@ -195,5 +178,13 @@ public class ProductService {
         .seller(seller)
         .build()
     );
+  }
+
+  private void updateProductFields(ProductUpdateDto request, ProductEntity product) {
+    if (request.getProductName() != null) product.setProductName(request.getProductName());
+    if (request.getDescription() != null) product.setDescription(request.getDescription());
+    if (request.getPrice() != null) product.setPrice(request.getPrice());
+    if (request.getStockQuantity() != null) product.setStockQuantity(request.getStockQuantity());
+    if (request.getStatus() != null) product.setStatus(request.getStatus());
   }
 }

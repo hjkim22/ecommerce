@@ -3,6 +3,7 @@ package com.ecommerce.domain.service;
 import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.enums.ProductStatus;
+import com.ecommerce.common.enums.Role;
 import com.ecommerce.common.exception.CustomException;
 import com.ecommerce.domain.dto.order.OrderCreateDto;
 import com.ecommerce.domain.dto.order.OrderDto;
@@ -101,9 +102,7 @@ public class OrderService {
   public OrderDto cancelOrder(Long orderId, Long customerId) {
     OrderEntity order = findOrderById(orderId);
 
-    if (!isAdmin() && !order.getCustomer().getId().equals(customerId)) {
-      throw new CustomException(ErrorCode.UNAUTHORIZED_CUSTOMER);
-    }
+    validateCustomerAuthorization(customerId, order);
     validateOrderCancellable(order);
 
     order.setStatus(OrderStatus.CANCELED);
@@ -144,9 +143,7 @@ public class OrderService {
   public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request, Long customerId) {
     OrderEntity order = findOrderById(orderId);
 
-    if (!isAdmin() && !order.getCustomer().getId().equals(customerId)) {
-      throw new CustomException(ErrorCode.UNAUTHORIZED_CUSTOMER);
-    }
+    validateCustomerAuthorization(customerId, order);
 
     validateOrderModifiable(order); // 수정 가능 여부 확인
     order.setDeliveryAddress(request.getDeliveryAddress());
@@ -155,10 +152,17 @@ public class OrderService {
 
   // ========================== 헬퍼 메서드 ==========================
 
+  // 사용자 권한 확인 (어드민이 아니고, 고객 ID가 일치하지 않는 경우)
+  private void validateCustomerAuthorization(Long customerId, OrderEntity order) {
+    if (!isAdmin() && !order.getCustomer().getId().equals(customerId)) {
+      throw new CustomException(ErrorCode.UNAUTHORIZED_CUSTOMER);
+    }
+  }
+
   // 어드민 확인
   private boolean isAdmin() {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Role.ADMIN.name()));
   }
 
   // 장바구니 소유권 확인

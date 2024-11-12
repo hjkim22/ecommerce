@@ -38,12 +38,7 @@ public class MemberService {
    */
   @Transactional
   public SignUpDto.Response signUp(SignUpDto.Request request) {
-    if (memberRepository.existsByEmail(request.getEmail())) {
-      throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
-    }
-    if (memberRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-      throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
-    }
+    validateMemberExists(request.getEmail(), request.getPhoneNumber());
 
     String encodedPassword = passwordEncoder.encode(request.getPassword());
     MemberEntity savedMember = createMember(request, encodedPassword);
@@ -62,8 +57,7 @@ public class MemberService {
    * @return 로그인 성공 응답 DTO
    */
   public SignInDto.Response signIn(SignInDto.Request request) {
-    MemberEntity member = memberRepository.findByEmail(request.getEmail())
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    MemberEntity member = findMemberByEmail(request.getEmail());
 
     if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
       throw new CustomException(ErrorCode.INVALID_PASSWORD);
@@ -81,8 +75,7 @@ public class MemberService {
    * @return 회원 정보 DTO
    */
   public MemberDto getMemberById(Long id) {
-    MemberEntity member = memberRepository.findById(id)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    MemberEntity member = findMemberById(id);
 
     return MemberDto.fromEntity(member);
   }
@@ -93,8 +86,7 @@ public class MemberService {
    * @return 회원 정보 DTO
    */
   public MemberDto getMemberByEmail(String email) {
-    MemberEntity member = memberRepository.findByEmail(email)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    MemberEntity member = findMemberByEmail(email);
 
     return MemberDto.fromEntity(member);
   }
@@ -128,9 +120,7 @@ public class MemberService {
    */
   @Transactional
   public MemberDto updateMember(Long id, MemberUpdateDto request, Long memberId) {
-    MemberEntity member = memberRepository.findById(id)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+    MemberEntity member = findMemberById(id);
     checkOwnership(memberId, id);
 
     if (memberRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), id)) {
@@ -151,14 +141,33 @@ public class MemberService {
    */
   @Transactional
   public void deleteMember(Long id, Long memberId) {
-    if (!memberRepository.existsById(id)) {
-      throw new CustomException(ErrorCode.USER_NOT_FOUND);
-    }
-
+    findMemberById(id);
     checkOwnership(id, memberId);
 
     memberRepository.deleteById(id);
     log.info("회원 삭제 성공 - ID: {}", id);
+  }
+
+  // 회원 중복 체크 메서드
+  private void validateMemberExists(String email, String phoneNumber) {
+    if (memberRepository.existsByEmail(email)) {
+      throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
+    }
+    if (memberRepository.existsByPhoneNumber(phoneNumber)) {
+      throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+    }
+  }
+
+  // 회원 조회 (이메일 기준)
+  private MemberEntity findMemberByEmail(String email) {
+    return memberRepository.findByEmail(email)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  // 회원 조회 (ID 기준)
+  private MemberEntity findMemberById(Long id) {
+    return memberRepository.findById(id)
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
 
   // 소유자 확인
@@ -171,7 +180,7 @@ public class MemberService {
   // 어드민 확인
   private boolean isAdmin() {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Role.ADMIN.name()));
   }
 
   /**

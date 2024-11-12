@@ -63,22 +63,12 @@ public class ProductController {
       Pageable pageable) {
     log.info("상품 정보 조회 요청");
 
-    Page<ProductDto> products = Page.empty();
+    Page<ProductDto> products = getSearchResults(name, sellerId, status, pageable);
 
-    if (name != null && !name.isEmpty()) {
-      products = productService.getProductByName(name, pageable);
-    }
-    if (sellerId != null) {
-      products = productService.getProductBySellerId(sellerId, pageable);
-    }
-    if (status != null) {
-      products = productService.getProductByStatus(status, pageable);
-    }
     if (products.isEmpty()) {
       log.info("상품 검색 결과 없음");
       return ResponseEntity.noContent().build(); // 빈 리스트일 경우 204 No Content 반환
     }
-
     return ResponseEntity.ok(products);
   }
 
@@ -107,5 +97,19 @@ public class ProductController {
     log.info("상품 삭제 요청 - ID: {}", id);
     productService.deleteProduct(id, sellerId);
     return ResponseEntity.noContent().build();
+  }
+
+  // 상품 검색 로직을 처리
+  private Page<ProductDto> getSearchResults(String name, Long sellerId, ProductStatus status, Pageable pageable) {
+    if (name != null && !name.isEmpty()) {
+      return productService.getProductByName(name, pageable);
+    }
+    if (sellerId != null) {
+      return productService.getProductBySellerId(sellerId, pageable);
+    }
+    if (status != null) {
+      return productService.getProductByStatus(status, pageable);
+    }
+    return Page.empty(); // 조건 없으면 빈 페이지 반환
   }
 }
