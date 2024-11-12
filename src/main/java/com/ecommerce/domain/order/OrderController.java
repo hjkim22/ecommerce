@@ -33,18 +33,19 @@ public class OrderController {
   private static final String ROLE_ACCESS_CONDITION =
       "hasRole('ROLE_CUSTOMER') or hasRole('ROLE_ADMIN')";
 
+  // 주문 생성
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @PostMapping
   public ResponseEntity<OrderCreateDto.Response> createOrder(
-      @Valid @RequestBody OrderCreateDto.Request orderCreateRequest,
-      @JwtToken Long customerId) {
-
+      @Valid @RequestBody OrderCreateDto.Request orderCreateRequest, @JwtToken Long customerId) {
     log.info("주문 생성 요청");
     OrderCreateDto.Response response = orderService.createOrder(customerId, orderCreateRequest);
+
     log.info("주문 생성 완료 - cart ID: {}", orderCreateRequest.getCartId());
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
+  // 주문 ID로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("{orderId}")
   public ResponseEntity<OrderDto> getOrderById(@PathVariable("orderId") Long orderId) {
@@ -53,6 +54,7 @@ public class OrderController {
     return ResponseEntity.ok(order);
   }
 
+  // 사용자 ID로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/customer")
   public ResponseEntity<Page<OrderDto>> getOrdersByCustomerId(@RequestParam Long customerId,
@@ -62,15 +64,18 @@ public class OrderController {
     return ResponseEntity.ok(orders);
   }
 
+  // 주문 상태로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/status/{status}")
-  public ResponseEntity<Page<OrderDto>> getOrdersByStatus(@PathVariable("status") OrderStatus status,
+  public ResponseEntity<Page<OrderDto>> getOrdersByStatus(
+      @PathVariable("status") OrderStatus status,
       Pageable pageable) {
     log.info("주문 상태별 조회 요청 - 상태: {}", status);
     Page<OrderDto> orders = orderService.getOrderByStatus(status, pageable);
     return ResponseEntity.ok(orders);
   }
 
+  // 전체 주문 조회 - 최신순
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping
   public ResponseEntity<Page<OrderDto>> getAllOrders(Pageable pageable) {
@@ -79,6 +84,7 @@ public class OrderController {
     return ResponseEntity.ok(orders);
   }
 
+  // 사용자 주문 취소
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<OrderDto> cancelOrder(@PathVariable("orderId") Long orderId,
@@ -88,6 +94,7 @@ public class OrderController {
     return ResponseEntity.ok(order);
   }
 
+  // 주문 상태 수정
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PatchMapping("/{orderId}/status")
   public ResponseEntity<OrderDto> changeOrderStatus(
@@ -98,6 +105,7 @@ public class OrderController {
     return ResponseEntity.ok(orderStatus);
   }
 
+  // 주문 배송지 수정
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PatchMapping("/{orderId}/delivery-address")
   public ResponseEntity<OrderDto> updateDeliveryAddress(

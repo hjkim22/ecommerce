@@ -7,8 +7,8 @@ import com.ecommerce.domain.cart.dto.AddToCartDto;
 import com.ecommerce.domain.cart.dto.CartDto;
 import com.ecommerce.domain.cart.dto.UpdateCartItemDto;
 import com.ecommerce.domain.member.MemberEntity;
-import com.ecommerce.domain.product.ProductEntity;
 import com.ecommerce.domain.member.MemberRepository;
+import com.ecommerce.domain.product.ProductEntity;
 import com.ecommerce.domain.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,8 @@ public class CartService {
 
   /**
    * 회원 가입 시 장바구니 생성
-   * @param member 생성 회원
+   *
+   * @param member 생성 회원 정보
    */
   public void createCartForMember(MemberEntity member) {
     CartEntity cart = CartEntity.builder()
@@ -34,10 +35,11 @@ public class CartService {
   }
 
   /**
-   * 장바구니에 상품 추가. 이미 상품이 있을 경우 수량 증가
+   * 장바구니에 상품 추가. 이미 상품이 존재 시 수량 증가
+   *
    * @param customerId 사용자 ID
-   * @param request 추가할 상품 정보
-   * @return 메시지, 수량
+   * @param request    추가할 상품 정보
+   * @return 상품 ID, 수량, 메시지
    */
   @Transactional
   public AddToCartDto.Response addProductToCart(Long customerId, AddToCartDto.Request request) {
@@ -57,24 +59,25 @@ public class CartService {
       CartItemEntity newCartItem = createCartItem(cart, product, request.getQuantity());
       cart.getCartItems().add(newCartItem);
     }
-    cartRepository.save(cart);
 
+    cartRepository.save(cart);
     return new AddToCartDto.Response(product.getId(), request.getQuantity(), "상품 추가 완료");
   }
 
   /**
    * 장바구니 정보 조회
+   *
    * @param cartId 장바구니 ID
    * @return 장바구니 정보 DTO
    */
   public CartDto getCartById(Long cartId) {
     CartEntity cart = findCartById(cartId);
-
     return CartDto.fromEntity(cart);
   }
 
   /**
    * 장바구니 정보 조회
+   *
    * @param customerId 사용자 ID
    * @return 장바구니 정보 DTO
    */
@@ -83,16 +86,16 @@ public class CartService {
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     CartEntity cart = findCartByCustomerId(customerId);
-
     return CartDto.fromEntity(cart);
   }
 
   /**
-   * 장바구니 수량 업데이트
-   * @param cartId 장바구니 ID
+   * 장바구니 상품 수량 업데이트
+   *
+   * @param cartId    장바구니 ID
    * @param productId 상품 ID
-   * @param request 수량 수정 정보 DTO
-   * @return 메시지, 수정된 수량
+   * @param request   수량 수정 정보 DTO
+   * @return 상품 ID, 수량, 메시지
    */
   @Transactional
   public AddToCartDto.Response updateCartItemQuantity(Long cartId, Long productId,
@@ -108,7 +111,12 @@ public class CartService {
     return new AddToCartDto.Response(productId, request.getQuantity(), "수량 수정 완료");
   }
 
-  // 특정 상품 삭제
+  /**
+   * 장바구니 특정 상품 삭제
+   *
+   * @param cartId    장바구니 ID
+   * @param productId 상품 ID
+   */
   public void removeProductFromCart(Long cartId, Long productId) {
     CartEntity cart = findCartById(cartId);
     ProductEntity product = findProductById(productId);
@@ -125,6 +133,7 @@ public class CartService {
 
   /**
    * 장바구니 비우기
+   *
    * @param cartId 장바구니 ID
    */
   public void clearCart(Long cartId) {
@@ -138,13 +147,9 @@ public class CartService {
     cartRepository.save(cart);
   }
 
-  /**
-   * 장바구니 엔티티 생성
-   * @param cart 장바구니 엔티티
-   * @param product 상품 엔티티
-   * @param quantity 수량
-   * @return 생성된 장바구니 아이템 엔티티
-   */
+  // ================================= Helper methods ================================= //
+
+  // 장바구니 엔티티 생성
   private CartItemEntity createCartItem(CartEntity cart, ProductEntity product, Integer quantity) {
     return CartItemEntity.builder()
         .cart(cart)
@@ -165,7 +170,7 @@ public class CartService {
         .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
   }
 
-  // 상품 조회, 없을 경우 예외
+  // 상품 조회(productId), 없을 경우 예외
   private ProductEntity findProductById(Long productId) {
     return productRepository.findById(productId)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));

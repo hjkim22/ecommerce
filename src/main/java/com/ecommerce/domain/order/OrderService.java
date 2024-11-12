@@ -5,13 +5,13 @@ import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.enums.ProductStatus;
 import com.ecommerce.common.enums.Role;
 import com.ecommerce.common.exception.CustomException;
+import com.ecommerce.domain.cart.CartEntity;
+import com.ecommerce.domain.cart.CartRepository;
+import com.ecommerce.domain.member.MemberRepository;
 import com.ecommerce.domain.order.dto.OrderCreateDto;
 import com.ecommerce.domain.order.dto.OrderDto;
 import com.ecommerce.domain.order.dto.OrderUpdateDto;
-import com.ecommerce.domain.cart.CartEntity;
 import com.ecommerce.domain.product.ProductEntity;
-import com.ecommerce.domain.cart.CartRepository;
-import com.ecommerce.domain.member.MemberRepository;
 import com.ecommerce.domain.product.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,27 +34,29 @@ public class OrderService {
 
   /**
    * 주문 생성
+   *
    * @param customerId 사용자 ID
-   * @param orderCreateRequest    주문 생성 요청 DTO
+   * @param request    주문 생성 요청 DTO
    * @return 주문 생성 응답 DTO
    */
   @Transactional
-  public OrderCreateDto.Response createOrder(Long customerId, OrderCreateDto.Request orderCreateRequest) {
-    CartEntity cart = validateCartOwnership(customerId, orderCreateRequest.getCartId());
+  public OrderCreateDto.Response createOrder(Long customerId, OrderCreateDto.Request request) {
+    CartEntity cart = validateCartOwnership(customerId, request.getCartId());
     validateCartNotEmpty(cart);
 
     List<OrderItemEntity> orderItems = createOrderItemsFromCart(cart);
-    OrderEntity order = buildOrder(orderCreateRequest, cart, orderItems);
-    order.addOrderItems(orderItems); // 주문 항목 추가
+    OrderEntity order = buildOrder(request, cart, orderItems);
+    order.addOrderItems(orderItems);
 
     orderRepository.save(order);
     clearCart(cart);
 
-    return new OrderCreateDto.Response(orderCreateRequest.getCartId(), order.getStatus(), "주문 완료");
+    return new OrderCreateDto.Response(request.getCartId(), order.getStatus(), "주문 완료");
   }
 
   /**
    * 주문 정보 조회
+   *
    * @param orderId 주문 ID
    * @return 주문 DTO
    */
@@ -64,6 +66,7 @@ public class OrderService {
 
   /**
    * 주문 정보 조회
+   *
    * @param customerId 사용자 ID
    * @return 주문 DTO 리스트
    */
@@ -74,11 +77,13 @@ public class OrderService {
     if (orders.isEmpty()) {
       throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
     }
+
     return orders.map(OrderDto::fromEntity);
   }
 
   /**
    * 주문 정보 조회
+   *
    * @param status 주문 상태
    * @return 주문 DTO 리스트
    */
@@ -87,16 +92,23 @@ public class OrderService {
     return orders.map(OrderDto::fromEntity);
   }
 
-  // 신규 주문 조회
+  /**
+   * 전체 주문 리스트 조회
+   *
+   * @param pageable 페이징 정보
+   * @return 전체 주문 목록 - 최신순
+   */
   public Page<OrderDto> getAllOrders(Pageable pageable) {
     Pageable sortedByCreatedAtDesc = PageRequest.of(
         pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
     Page<OrderEntity> orders = orderRepository.findAll(sortedByCreatedAtDesc);
+
     return orders.map(OrderDto::fromEntity);
   }
 
   /**
    * 사용자 주문 취소
+   *
    * @param orderId 주문 ID
    * @return 취소된 주문 DTO
    */
@@ -108,12 +120,14 @@ public class OrderService {
     validateOrderCancellable(order);
 
     order.setStatus(OrderStatus.CANCELED);
-    restoreStock(order); // 재고 복구
+    restoreStock(order);
+
     return OrderDto.fromEntity(order);
   }
 
   /**
    * 주문 상태 변경
+   *
    * @param orderId   주문 ID
    * @param newStatus 새로운 주문 상태
    * @return 변경된 주문 DTO
@@ -122,12 +136,10 @@ public class OrderService {
   public OrderDto updateOrderStatus(Long orderId, OrderStatus newStatus) {
     OrderEntity order = findOrderById(orderId);
 
-    // 상태별 변경 가능 여부 확인
     switch (order.getStatus()) {
-      case PENDING ->
-          validateStatusTransition(order.getStatus(), newStatus, OrderStatus.SHIPPED, OrderStatus.CANCELED);
-      case SHIPPED ->
-          validateStatusTransition(order.getStatus(), newStatus, OrderStatus.DELIVERED);
+      case PENDING -> validateStatusTransition(order.getStatus(), newStatus, OrderStatus.SHIPPED,
+          OrderStatus.CANCELED);
+      case SHIPPED -> validateStatusTransition(order.getStatus(), newStatus, OrderStatus.DELIVERED);
       default -> throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
     }
 
@@ -137,31 +149,33 @@ public class OrderService {
 
   /**
    * 배송지 수정
+   *
    * @param orderId 주문 ID
-   * @param deliveryUpdateRequest 배송지 수정 요청 DTO
+   * @param request 배송지 수정 요청 DTO
    * @return 수정된 주문 DTO
    */
   @Transactional
-  public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto deliveryUpdateRequest, Long customerId) {
+  public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request, Long customerId) {
     OrderEntity order = findOrderById(orderId);
 
     validateCustomerAuthorization(customerId, order);
 
-    validateOrderModifiable(order); // 수정 가능 여부 확인
-    order.setDeliveryAddress(deliveryUpdateRequest.getDeliveryAddress());
+    validateOrderModifiable(order);
+    order.setDeliveryAddress(request.getDeliveryAddress());
+
     return OrderDto.fromEntity(order);
   }
 
-  // ========================== 헬퍼 메서드 ==========================
+  // ================================= Helper methods ================================= //
 
-  // 사용자 권한 확인 (어드민이 아니고, 고객 ID가 일치하지 않는 경우)
+  // 사용자 권한 확인 (어드민이 아니고, 고객 ID가 일치하지 않는 경우 예외)
   private void validateCustomerAuthorization(Long customerId, OrderEntity order) {
     if (!isAdmin() && !order.getCustomer().getId().equals(customerId)) {
       throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
   }
 
-  // 어드민 확인
+  // 어드민 권한 확인
   private boolean isAdmin() {
     return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
         .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Role.ADMIN.name()));
@@ -217,7 +231,7 @@ public class OrderService {
     }
   }
 
-  // 상태 검증
+  // 주문 상태 검증
   private void validateStatusTransition(OrderStatus newStatus,
       OrderStatus... allowedStatuses) {
     if (!List.of(allowedStatuses).contains(newStatus)) {
@@ -225,7 +239,7 @@ public class OrderService {
     }
   }
 
-  // 상태 설정
+  // 주문 상태 설정
   private void setOrderStatus(OrderEntity order, OrderStatus newStatus) {
     if (newStatus == OrderStatus.CANCELED) {
       restoreStock(order);
@@ -271,7 +285,7 @@ public class OrderService {
         .build();
   }
 
-  // 주문 엔티티 생성 메서드
+  // 주문 엔티티 생성
   private static OrderEntity buildOrder(OrderCreateDto.Request request, CartEntity cart,
       List<OrderItemEntity> orderItems) {
     return OrderEntity.builder()

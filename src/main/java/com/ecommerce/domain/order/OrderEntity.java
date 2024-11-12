@@ -43,8 +43,8 @@ public class OrderEntity extends BaseTimeEntity {
   @Enumerated(EnumType.STRING)
   private OrderStatus status;
 
-  private String deliveryAddress; // 배송지
-  private BigDecimal totalPrice;  // 총 가격
+  private String deliveryAddress;
+  private BigDecimal totalPrice;
 
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItemEntity> orderItems = new ArrayList<>();

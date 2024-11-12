@@ -45,6 +45,7 @@ public class MemberController {
   public ResponseEntity<SignUpDto.Response> signUp(@Valid @RequestBody SignUpDto.Request request) {
     log.info("회원가입 요청 - 이메일: {}", request.getEmail());
     SignUpDto.Response newMember = memberService.signUp(request);
+
     log.info("회원가입 성공 - 이메일: {}", newMember.getEmail());
     return ResponseEntity.status(CREATED).body(newMember);
   }
@@ -54,6 +55,7 @@ public class MemberController {
   public ResponseEntity<SignInDto.Response> signIn(@Valid @RequestBody SignInDto.Request request) {
     log.info("로그인 요청 - 이메일: {}", request.getEmail());
     SignInDto.Response newMember = memberService.signIn(request); // 로그인 서비스에서 토큰을 포함한 응답 받음
+
     log.info("로그인 성공 - 이메일: {}", newMember.getEmail());
     return ResponseEntity.ok(newMember); // 로그인 성공 시 JWT 토큰과 이메일을 포함한 응답 반환
   }
@@ -64,6 +66,7 @@ public class MemberController {
       throws MessagingException {
     log.info("인증 메일 전송 요청 - 이메일: {}", request.email());
     emailService.sendEmailVerification(request.email());
+
     log.info("인증 메일 전송 완료");
     return ResponseEntity.noContent().build();
   }
@@ -73,11 +76,12 @@ public class MemberController {
   public ResponseEntity<Void> verifyEmailCode(@RequestBody @Valid EmailVerificationDto request) {
     log.info("인증번호 확인 요청 - 인증 코드: {}", request.getVerificationCode());
     emailService.validateVerificationCode(request);
+
     log.info("인증번호 확인 성공");
     return ResponseEntity.ok().build();
   }
 
-  // 회원조회 id
+  // 회원 ID로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{memberId}")
   public ResponseEntity<MemberDto> getMemberById(@PathVariable("memberId") Long memberId) {
@@ -85,7 +89,7 @@ public class MemberController {
     return ResponseEntity.ok(memberService.getMemberById(memberId));
   }
 
-  // 회원조회 email
+  // 회원 email 로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/email/{email}") // id 와 url 충돌방지
   public ResponseEntity<MemberDto> getMemberByEmail(@PathVariable("email") String email) {
@@ -93,16 +97,17 @@ public class MemberController {
     return ResponseEntity.ok(memberService.getMemberByEmail(email));
   }
 
-  // 회원조회 role
+  // 회원 역할로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/role")
-  public ResponseEntity<Page<MemberDto>> getMembersByRole(@RequestParam Role role, Pageable pageable) {
+  public ResponseEntity<Page<MemberDto>> getMembersByRole(@RequestParam Role role,
+      Pageable pageable) {
     log.info("회원 정보 조회 요청 - Role: {}", role);
     Page<MemberDto> members = memberService.getMembersByRole(role, pageable);
     return ResponseEntity.ok(members);
   }
 
-  // 회원조회 최신순
+  // 전체 회원 조회 - 최신순
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping
   public ResponseEntity<Page<MemberDto>> getAllMembers(Pageable pageable) {
@@ -111,7 +116,7 @@ public class MemberController {
     return ResponseEntity.ok(members);
   }
 
-  // 업데이트
+  // 회원 정보 업데이트
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PutMapping("/{memberId}")
   public ResponseEntity<MemberDto> updateMember(
@@ -122,7 +127,7 @@ public class MemberController {
     return ResponseEntity.ok(memberService.updateMember(memberId, request, requestMemberId));
   }
 
-  // 삭제
+  // 회원 삭제
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @DeleteMapping("/{memberId}")
   public ResponseEntity<Void> deleteMember(

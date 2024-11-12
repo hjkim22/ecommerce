@@ -62,11 +62,9 @@ public class MemberEntity extends BaseTimeEntity implements UserDetails {
   @Enumerated(EnumType.STRING)
   private Role role;
 
-  // ProductEntity 와의 관계 설정 / MemberEntity 삭제 시 관련된 ProductEntity 함께 삭제
   @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ProductEntity> products;
 
-  // CartEntity 와의 관계 설정 / MemberEntity 삭제 시 관련된 CartEntity 함께 삭제
   @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
   private CartEntity cart;
 
@@ -81,9 +79,6 @@ public class MemberEntity extends BaseTimeEntity implements UserDetails {
     return this.email; // 사용자명으로 이메일 사용
   }
 
-  // 아래 오버라이드 메서드들은 우선 모두 true
-  // 계정 상태와 상관없이 항상 인증 가능
-  // 요구사항 정리해보고 변경 예정
   @Override
   public boolean isAccountNonExpired() {
     return true; // 계정 만료 여부

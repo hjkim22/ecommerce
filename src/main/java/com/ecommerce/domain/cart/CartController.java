@@ -26,19 +26,18 @@ public class CartController {
 
   private final CartService cartService;
 
-  // 담기
+  // 장바구니 상품 추가
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @PostMapping
   public ResponseEntity<AddToCartDto.Response> addItemToCart(
-      @Valid @RequestBody AddToCartDto.Request request,
-      @JwtToken Long customerId) {
+      @Valid @RequestBody AddToCartDto.Request request, @JwtToken Long customerId) {
     log.info("장바구니 상품 추가 요청");
     AddToCartDto.Response response = cartService.addProductToCart(customerId, request);
     log.info("장바구니 상품 추가 완료 - 상품 ID: {}", response.getProductId());
     return ResponseEntity.ok(response);
   }
 
-  // cartId 조회
+  // 장바구니 ID로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{cartId}")
   public ResponseEntity<CartDto> getCartById(@PathVariable("cartId") Long cartId) {
@@ -47,7 +46,7 @@ public class CartController {
     return ResponseEntity.ok(cart);
   }
 
-  // customerId 조회
+  // 사용자 ID로 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/customer/{customerId}")
   public ResponseEntity<CartDto> getCartByCustomerId(@PathVariable("customerId") Long customerId) {
@@ -56,7 +55,7 @@ public class CartController {
     return ResponseEntity.ok(cart);
   }
 
-  // 수정
+  // 장바구니 상품 수량 수정
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @PatchMapping("/{cartId}/items/{productId}")
   public ResponseEntity<AddToCartDto.Response> updateCartItemQuantity(
@@ -69,7 +68,7 @@ public class CartController {
     return ResponseEntity.ok(response);
   }
 
-  // 특정 상품 삭제
+  // 장바구니 특정 상품 삭제
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @DeleteMapping("/{cartId}/items/{productId}")
   public ResponseEntity<Void> deleteCartItem(
@@ -79,7 +78,7 @@ public class CartController {
     return ResponseEntity.noContent().build();
   }
 
-  // 비우기
+  // 장바구니 비우기
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @DeleteMapping("/{cartId}")
   public ResponseEntity<Void> clearCart(@PathVariable("cartId") Long cartId) {

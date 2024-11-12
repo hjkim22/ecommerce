@@ -36,7 +36,7 @@ public class ProductEntity extends BaseTimeEntity {
   private BigDecimal price;
   private Integer stockQuantity;
 
-  @ManyToOne(fetch = FetchType.LAZY) // 지연로딩, 필드에 접근할 때만 필요한 정보 가져옴
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "member_id", nullable = false)
   private MemberEntity seller;
 

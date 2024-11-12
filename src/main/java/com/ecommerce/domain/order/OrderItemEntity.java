@@ -36,5 +36,5 @@ public class OrderItemEntity {
   private ProductEntity product;
 
   private Integer quantity;
-  private BigDecimal price; // 상품 단가
+  private BigDecimal price;
 }

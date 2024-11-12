@@ -15,7 +15,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class MemberDto {
 
-  // 조회용 DTO 라서 유효성 검증 필요 없음.
   private Long id;
   private String email;
   private String name;

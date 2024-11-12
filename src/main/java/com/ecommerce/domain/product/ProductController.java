@@ -35,6 +35,7 @@ public class ProductController {
   private static final String ROLE_ACCESS_CONDITION =
       "hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')";
 
+  // 상품 생성
   @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
   @PostMapping
   public ResponseEntity<ProductCreateDto.Response> createProduct(
@@ -47,6 +48,7 @@ public class ProductController {
     return ResponseEntity.status(CREATED).body(newProduct);
   }
 
+  // 판매자 ID로 상품 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{productId}")
   public ResponseEntity<ProductDto> getProductById(@PathVariable("productId") Long productId) {
@@ -55,6 +57,7 @@ public class ProductController {
     return ResponseEntity.ok(product);
   }
 
+  // 상품 검색
   @GetMapping("/search")
   public ResponseEntity<Page<ProductDto>> searchProducts(
       @RequestParam(required = false) String name,
@@ -67,11 +70,12 @@ public class ProductController {
 
     if (products.isEmpty()) {
       log.info("상품 검색 결과 없음");
-      return ResponseEntity.noContent().build(); // 빈 리스트일 경우 204 No Content 반환
+      return ResponseEntity.noContent().build();
     }
     return ResponseEntity.ok(products);
   }
 
+  // 전체 상품 조회
   @GetMapping
   public ResponseEntity<Page<ProductDto>> getAllProducts(Pageable pageable) {
     log.info("전체 상품 정보 조회 요청");
@@ -79,6 +83,7 @@ public class ProductController {
     return ResponseEntity.ok(products);
   }
 
+  // 상품 업데이트
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PutMapping("/{productId}")
   public ResponseEntity<ProductDto> updateProduct(
@@ -91,6 +96,7 @@ public class ProductController {
     return ResponseEntity.ok(updatedProduct);
   }
 
+  // 상품 삭제
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long productId,
@@ -100,7 +106,7 @@ public class ProductController {
     return ResponseEntity.noContent().build();
   }
 
-  // 상품 검색 로직을 처리
+  // 상품 검색 로직 처리
   private Page<ProductDto> getSearchResults(String ProductStatus, Long sellerId,
       ProductStatus productStatus, Pageable pageable) {
     if (ProductStatus != null && !ProductStatus.isEmpty()) {
