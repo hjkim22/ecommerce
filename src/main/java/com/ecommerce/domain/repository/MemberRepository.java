@@ -16,6 +16,5 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
   boolean existsByEmail(String email);
   boolean existsByPhoneNumber(String phoneNumber);
   boolean existsByPhoneNumberAndIdNot(String phone, Long id);
-  Page<MemberEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
   Page<MemberEntity> findMemberByRole(Role role, Pageable pageable);
 }

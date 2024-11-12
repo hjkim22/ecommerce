@@ -14,7 +14,9 @@ import com.ecommerce.domain.repository.MemberRepository;
 import com.ecommerce.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,7 +87,10 @@ public class ProductService {
    * @return 상품 DTO 리스트
    */
   public Page<ProductDto> getProducts(Pageable pageable) {
-    return getProductPage(productRepository.findAll(pageable));
+    Pageable sortedByCreatedAtDesc = PageRequest.of(
+        pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
+    Page<ProductEntity> products = productRepository.findAll(sortedByCreatedAtDesc);
+    return products.map(ProductDto::fromEntity);
   }
 
   /**

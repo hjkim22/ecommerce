@@ -15,7 +15,9 @@ import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -108,7 +110,9 @@ public class MemberService {
    * @return 회원 목록 - 최신순
    */
   public Page<MemberDto> getMembers(Pageable pageable) {
-    Page<MemberEntity> members = memberRepository.findAllByOrderByCreatedAtDesc(pageable);
+    Pageable sortedByCreatedAtDesc = PageRequest.of(
+        pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
+    Page<MemberEntity> members = memberRepository.findAll(sortedByCreatedAtDesc);
     return members.map(MemberDto::fromEntity);
   }
 

@@ -19,7 +19,9 @@ import com.ecommerce.domain.repository.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,8 +90,11 @@ public class OrderService {
     return orders.map(OrderDto::fromEntity);
   }
 
+  // 신규 주문 조회
   public Page<OrderDto> getOrders(Pageable pageable) {
-    Page<OrderEntity> orders = orderRepository.findAll(pageable);
+    Pageable sortedByCreatedAtDesc = PageRequest.of(
+        pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
+    Page<OrderEntity> orders = orderRepository.findAll(sortedByCreatedAtDesc);
     return orders.map(OrderDto::fromEntity);
   }
 
