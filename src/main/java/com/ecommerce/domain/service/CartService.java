@@ -43,14 +43,14 @@ public class CartService {
    * @return 메시지, 수량
    */
   @Transactional
-  public AddToCartDto.Response addItemToCart(Long customerId, AddToCartDto.Request request) {
+  public AddToCartDto.Response addProductToCart(Long customerId, AddToCartDto.Request request) {
     CartEntity cart = findCartByCustomerId(customerId);
     ProductEntity product = findProductById(request.getProductId());
 
     validateProductStatus(product);
     validateProductQuantity(product, request.getQuantity());
 
-    CartItemEntity existingCartItem = findCartItem(cart, product);
+    CartItemEntity existingCartItem = findCartItemByProduct(cart, product);
 
     if (existingCartItem != null) {
       int updatedQuantity = existingCartItem.getQuantity() + request.getQuantity();
@@ -105,18 +105,18 @@ public class CartService {
 
     validateProductQuantity(product, request.getQuantity());
 
-    CartItemEntity existingCartItem = findCartItem(cart, product);
+    CartItemEntity existingCartItem = findCartItemByProduct(cart, product);
     existingCartItem.setQuantity(request.getQuantity());
 
     return new AddToCartDto.Response(productId, request.getQuantity(), "수량 수정 완료");
   }
 
   // 특정 상품 삭제
-  public void deleteCartItem(Long cartId, Long productId) {
+  public void removeProductFromCart(Long cartId, Long productId) {
     CartEntity cart = findCartById(cartId);
     ProductEntity product = findProductById(productId);
 
-    CartItemEntity cartItem = findCartItem(cart, product);
+    CartItemEntity cartItem = findCartItemByProduct(cart, product);
 
     if (cartItem == null) {
       throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
@@ -192,7 +192,7 @@ public class CartService {
   }
 
   // 장바구니에서 해당 아이템 조회, 없을 경우 null
-  private CartItemEntity findCartItem(CartEntity cart, ProductEntity product) {
+  private CartItemEntity findCartItemByProduct(CartEntity cart, ProductEntity product) {
     return cart.getCartItems().stream()
         .filter(item -> item.getProduct().getId().equals(product.getId()))
         .findFirst()

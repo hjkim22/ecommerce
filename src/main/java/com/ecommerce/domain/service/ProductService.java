@@ -43,33 +43,33 @@ public class ProductService {
 
   /**
    * 상품 정보 조회
-   * @param id 상품 ID
+   * @param productId 상품 ID
    * @return 상품 DTO
    */
-  public ProductDto getProductById(Long id) {
-    ProductEntity product = findProductById(id);
+  public ProductDto getProductById(Long productId) {
+    ProductEntity product = findProductById(productId);
 
     return ProductDto.fromEntity(product);
   }
 
   /**
    * 상품 정보 조회
-   * @param name 상품명
+   * @param productName 상품명
    * @return 상품 DTO 리스트
    */
-  public Page<ProductDto> getProductByName(String name, Pageable pageable) {
-    return getProductPage(productRepository.findByProductNameContaining(name, pageable));
+  public Page<ProductDto> getProductByName(String productName, Pageable pageable) {
+    return getProductPage(productRepository.findByProductNameContaining(productName, pageable));
   }
 
   /**
    * 상품 정보 조회
-   * @param id 판매자 ID
+   * @param sellerId 판매자 ID
    * @return 상품 DTO 리스트
    */
-  public Page<ProductDto> getProductBySellerId(Long id, Pageable pageable) {
-    memberRepository.findById(id)
+  public Page<ProductDto> getProductBySellerId(Long sellerId, Pageable pageable) {
+    memberRepository.findById(sellerId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    return getProductPage(productRepository.findBySellerId(id, pageable));
+    return getProductPage(productRepository.findBySellerId(sellerId, pageable));
   }
 
   /**
@@ -86,7 +86,7 @@ public class ProductService {
    * @param pageable 페이징 정보
    * @return 상품 DTO 리스트
    */
-  public Page<ProductDto> getProducts(Pageable pageable) {
+  public Page<ProductDto> getAllProducts(Pageable pageable) {
     Pageable sortedByCreatedAtDesc = PageRequest.of(
         pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
     Page<ProductEntity> products = productRepository.findAll(sortedByCreatedAtDesc);
@@ -95,14 +95,14 @@ public class ProductService {
 
   /**
    * 상품 정보 업데이트
-   * @param id 상품 ID
+   * @param productId 상품 ID
    * @param request 업데이트 요청 데이터
    * @param sellerId 판매자 ID
    * @return 업데이트된 상품 DTO
    */
   @Transactional
-  public ProductDto updateProduct(Long id, ProductUpdateDto request, Long sellerId) {
-    ProductEntity product = validateProductAndAccess(id, sellerId); // 상품 및 접근 유효성 검사
+  public ProductDto updateProduct(Long productId, ProductUpdateDto request, Long sellerId) {
+    ProductEntity product = validateProductAndAccess(productId, sellerId); // 상품 및 접근 유효성 검사
     updateProductFields(request, product);
 
     return ProductDto.fromEntity(product);
@@ -110,19 +110,19 @@ public class ProductService {
 
   /**
    * 상품 삭제
-   * @param id 상품 ID
+   * @param productId 상품 ID
    * @param sellerId 판매자 ID
    */
   @Transactional
-  public void deleteProduct(Long id, Long sellerId) {
-    ProductEntity product = validateProductAndAccess(id, sellerId);
+  public void deleteProduct(Long productId, Long sellerId) {
+    ProductEntity product = validateProductAndAccess(productId, sellerId);
     product.setStatus(ProductStatus.DELETED);
   }
 
   // ========================== 헬퍼 메서드 ==========================
 
-  private ProductEntity findProductById(Long id) {
-    return productRepository.findById(id)
+  private ProductEntity findProductById(Long productId) {
+    return productRepository.findById(productId)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
   }
 
@@ -149,12 +149,12 @@ public class ProductService {
 
   /**
    * 상품 및 접근 유효성 검사
-   * @param id 상품 ID
+   * @param productId 상품 ID
    * @param sellerId 판매자 ID
    * @return 유효한 상품 엔티티
    */
-  private ProductEntity validateProductAndAccess(Long id, Long sellerId) {
-    ProductEntity product = findProductById(id);
+  private ProductEntity validateProductAndAccess(Long productId, Long sellerId) {
+    ProductEntity product = findProductById(productId);
     if (!isAdmin() && !product.getSeller().getId().equals(sellerId)) {
       throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }

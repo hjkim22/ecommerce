@@ -38,22 +38,22 @@ public class OrderService {
   /**
    * 주문 생성
    * @param customerId 사용자 ID
-   * @param request    주문 생성 요청 DTO
+   * @param orderCreateRequest    주문 생성 요청 DTO
    * @return 주문 생성 응답 DTO
    */
   @Transactional
-  public OrderCreateDto.Response createOrder(Long customerId, OrderCreateDto.Request request) {
-    CartEntity cart = validateCartOwnership(customerId, request.getCartId());
+  public OrderCreateDto.Response createOrder(Long customerId, OrderCreateDto.Request orderCreateRequest) {
+    CartEntity cart = validateCartOwnership(customerId, orderCreateRequest.getCartId());
     validateCartNotEmpty(cart);
 
-    List<OrderItemEntity> orderItems = createOrderItem(cart);
-    OrderEntity order = buildOrder(request, cart, orderItems);
+    List<OrderItemEntity> orderItems = createOrderItemsFromCart(cart);
+    OrderEntity order = buildOrder(orderCreateRequest, cart, orderItems);
     order.addOrderItems(orderItems); // 주문 항목 추가
 
     orderRepository.save(order);
     clearCart(cart);
 
-    return new OrderCreateDto.Response(request.getCartId(), order.getStatus(), "주문 완료");
+    return new OrderCreateDto.Response(orderCreateRequest.getCartId(), order.getStatus(), "주문 완료");
   }
 
   /**
@@ -91,7 +91,7 @@ public class OrderService {
   }
 
   // 신규 주문 조회
-  public Page<OrderDto> getOrders(Pageable pageable) {
+  public Page<OrderDto> getAllOrders(Pageable pageable) {
     Pageable sortedByCreatedAtDesc = PageRequest.of(
         pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
     Page<OrderEntity> orders = orderRepository.findAll(sortedByCreatedAtDesc);
@@ -122,7 +122,7 @@ public class OrderService {
    * @return 변경된 주문 DTO
    */
   @Transactional
-  public OrderDto changeOrderStatus(Long orderId, OrderStatus newStatus) {
+  public OrderDto updateOrderStatus(Long orderId, OrderStatus newStatus) {
     OrderEntity order = findOrderById(orderId);
 
     // 상태별 변경 가능 여부 확인
@@ -141,17 +141,17 @@ public class OrderService {
   /**
    * 배송지 수정
    * @param orderId 주문 ID
-   * @param request 배송지 수정 요청 DTO
+   * @param deliveryUpdateRequest 배송지 수정 요청 DTO
    * @return 수정된 주문 DTO
    */
   @Transactional
-  public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto request, Long customerId) {
+  public OrderDto updateDeliveryAddress(Long orderId, OrderUpdateDto deliveryUpdateRequest, Long customerId) {
     OrderEntity order = findOrderById(orderId);
 
     validateCustomerAuthorization(customerId, order);
 
     validateOrderModifiable(order); // 수정 가능 여부 확인
-    order.setDeliveryAddress(request.getDeliveryAddress());
+    order.setDeliveryAddress(deliveryUpdateRequest.getDeliveryAddress());
     return OrderDto.fromEntity(order);
   }
 
@@ -189,13 +189,13 @@ public class OrderService {
   }
 
   // 주문 항목 생성, 재고량 반영
-  private List<OrderItemEntity> createOrderItem(CartEntity cart) {
+  private List<OrderItemEntity> createOrderItemsFromCart(CartEntity cart) {
     return cart.getCartItems().stream()
         .map(cartItem -> {
           ProductEntity product = cartItem.getProduct();
           validateProductStatus(product);
           checkAndReduceStock(product, cartItem.getQuantity());
-          return createOrderItem(product, cartItem.getQuantity());
+          return createOrderItemsFromCart(product, cartItem.getQuantity());
         })
         .toList();
   }
@@ -266,7 +266,7 @@ public class OrderService {
   }
 
   // 주문 항목 생성
-  private OrderItemEntity createOrderItem(ProductEntity product, Integer quantity) {
+  private OrderItemEntity createOrderItemsFromCart(ProductEntity product, Integer quantity) {
     return OrderItemEntity.builder()
         .product(product)
         .quantity(quantity)

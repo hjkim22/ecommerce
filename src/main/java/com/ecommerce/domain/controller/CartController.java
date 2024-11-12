@@ -34,7 +34,7 @@ public class CartController {
       @Valid @RequestBody AddToCartDto.Request request,
       @JwtToken Long customerId) {
     log.info("장바구니 상품 추가 요청");
-    AddToCartDto.Response response = cartService.addItemToCart(customerId, request);
+    AddToCartDto.Response response = cartService.addProductToCart(customerId, request);
     log.info("장바구니 상품 추가 완료 - 상품 ID: {}", response.getProductId());
     return ResponseEntity.ok(response);
   }
@@ -42,18 +42,18 @@ public class CartController {
   // cartId 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{cartId}")
-  public ResponseEntity<CartDto> getCartById(@PathVariable("cartId") Long id) {
-    log.info("장바구니 조회 요청 - 장바구니 ID: {}", id);
-    CartDto cart = cartService.getCartById(id);
+  public ResponseEntity<CartDto> getCartById(@PathVariable("cartId") Long cartId) {
+    log.info("장바구니 조회 요청 - 장바구니 ID: {}", cartId);
+    CartDto cart = cartService.getCartById(cartId);
     return ResponseEntity.ok(cart);
   }
 
   // customerId 조회
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @GetMapping("/customerId/{customerId}")
-  public ResponseEntity<CartDto> getCartByCustomerId(@PathVariable("customerId") Long id) {
-    log.info("장바구니 조회 요청 - 사용자 ID: {}", id);
-    CartDto cart = cartService.getCartByCustomerId(id);
+  @GetMapping("/customer/{customerId}")
+  public ResponseEntity<CartDto> getCartByCustomerId(@PathVariable("customerId") Long customerId) {
+    log.info("장바구니 조회 요청 - 사용자 ID: {}", customerId);
+    CartDto cart = cartService.getCartByCustomerId(customerId);
     return ResponseEntity.ok(cart);
   }
 
@@ -76,7 +76,7 @@ public class CartController {
   public ResponseEntity<Void> deleteCartItem(
       @PathVariable Long cartId,
       @PathVariable Long productId) {
-    cartService.deleteCartItem(cartId, productId);
+    cartService.removeProductFromCart(cartId, productId);
     return ResponseEntity.noContent().build();
   }
 

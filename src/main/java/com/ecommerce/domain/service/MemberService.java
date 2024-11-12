@@ -35,15 +35,15 @@ public class MemberService {
 
   /**
    * 회원가입
-   * @param request 회원가입 요청 DTO
+   * @param signUpRequest 회원가입 요청 DTO
    * @return 회원가입 성공 응답 DTO
    */
   @Transactional
-  public SignUpDto.Response signUp(SignUpDto.Request request) {
-    validateMemberExists(request.getEmail(), request.getPhoneNumber());
+  public SignUpDto.Response signUp(SignUpDto.Request signUpRequest) {
+    validateMemberExists(signUpRequest.getEmail(), signUpRequest.getPhoneNumber());
 
-    String encodedPassword = passwordEncoder.encode(request.getPassword());
-    MemberEntity savedMember = createMember(request, encodedPassword);
+    String encodedPassword = passwordEncoder.encode(signUpRequest.getPassword());
+    MemberEntity savedMember = createMember(signUpRequest, encodedPassword);
 
     // CUSTOMER 인 경우만 장바구니 생성
     if (savedMember.getRole() == Role.CUSTOMER) {
@@ -55,13 +55,13 @@ public class MemberService {
 
   /**
    * 로그인
-   * @param request 로그인 요청 DTO
+   * @param signInRequest 로그인 요청 DTO
    * @return 로그인 성공 응답 DTO
    */
-  public SignInDto.Response signIn(SignInDto.Request request) {
-    MemberEntity member = findMemberByEmail(request.getEmail());
+  public SignInDto.Response signIn(SignInDto.Request signInRequest) {
+    MemberEntity member = findMemberByEmail(signInRequest.getEmail());
 
-    if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
+    if (!passwordEncoder.matches(signInRequest.getPassword(), member.getPassword())) {
       throw new CustomException(ErrorCode.INVALID_PASSWORD);
     }
 
@@ -73,11 +73,11 @@ public class MemberService {
 
   /**
    * 회원 정보 조회
-   * @param id 회원 ID
+   * @param memberId 회원 ID
    * @return 회원 정보 DTO
    */
-  public MemberDto getMemberById(Long id) {
-    MemberEntity member = findMemberById(id);
+  public MemberDto getMemberById(Long memberId) {
+    MemberEntity member = findMemberById(memberId);
 
     return MemberDto.fromEntity(member);
   }
@@ -99,7 +99,7 @@ public class MemberService {
    * @param pageable 페이징 정보
    * @return 역할별 회원 목록
    */
-  public Page<MemberDto> getMemberByRole(Role role, Pageable pageable) {
+  public Page<MemberDto> getMembersByRole(Role role, Pageable pageable) {
     Page<MemberEntity> members = memberRepository.findMemberByRole(role, pageable);
     return members.map(MemberDto::fromEntity);
   }
@@ -109,7 +109,7 @@ public class MemberService {
    * @param pageable 페이징 정보
    * @return 회원 목록 - 최신순
    */
-  public Page<MemberDto> getMembers(Pageable pageable) {
+  public Page<MemberDto> getAllMembers(Pageable pageable) {
     Pageable sortedByCreatedAtDesc = PageRequest.of(
         pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
     Page<MemberEntity> members = memberRepository.findAll(sortedByCreatedAtDesc);
@@ -118,16 +118,16 @@ public class MemberService {
 
   /**
    * 회원 정보 업데이트
-   * @param id      회원 ID
+   * @param targetMemberId      회원 ID
    * @param request 업데이트 요청 DTO
    * @return 업데이트된 회원 정보 DTO
    */
   @Transactional
-  public MemberDto updateMember(Long id, MemberUpdateDto request, Long memberId) {
-    MemberEntity member = findMemberById(id);
-    checkOwnership(memberId, id);
+  public MemberDto updateMember(Long targetMemberId, MemberUpdateDto request, Long requestMemberId) {
+    MemberEntity member = findMemberById(targetMemberId);
+    validateOwnership(requestMemberId, targetMemberId);
 
-    if (memberRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), id)) {
+    if (memberRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), targetMemberId)) {
       throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
     }
 
@@ -135,7 +135,7 @@ public class MemberService {
     member.setPhoneNumber(request.getPhoneNumber());
     member.setAddress(request.getAddress());
 
-    log.info("회원 정보 업데이트 성공 - ID: {}", id);
+    log.info("회원 정보 업데이트 성공 - ID: {}", targetMemberId);
     return MemberDto.fromEntity(member);
   }
 
@@ -144,12 +144,12 @@ public class MemberService {
    * @param id 회원 ID
    */
   @Transactional
-  public void deleteMember(Long id, Long memberId) {
-    findMemberById(id);
-    checkOwnership(id, memberId);
+  public void deleteMember(Long targetMemberId, Long requestMemberId) {
+    findMemberById(targetMemberId);
+    validateOwnership(requestMemberId, targetMemberId);
 
-    memberRepository.deleteById(id);
-    log.info("회원 삭제 성공 - ID: {}", id);
+    memberRepository.deleteById(targetMemberId);
+    log.info("회원 삭제 성공 - ID: {}", targetMemberId);
   }
 
   // 회원 중복 체크 메서드
@@ -169,13 +169,13 @@ public class MemberService {
   }
 
   // 회원 조회 (ID 기준)
-  private MemberEntity findMemberById(Long id) {
-    return memberRepository.findById(id)
+  private MemberEntity findMemberById(Long memberId) {
+    return memberRepository.findById(memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
 
   // 소유자 확인
-  private void checkOwnership(Long requestMemberId, Long memberId) {
+  private void validateOwnership(Long requestMemberId, Long memberId) {
     if (!isAdmin() && !memberId.equals(requestMemberId)) {
       throw new CustomException(ErrorCode.INVALID_CUSTOMER_ACCESS);
     }

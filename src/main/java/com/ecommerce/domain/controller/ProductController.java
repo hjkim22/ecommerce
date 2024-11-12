@@ -39,19 +39,20 @@ public class ProductController {
   @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
   @PostMapping
   public ResponseEntity<ProductCreateDto.Response> createProduct(
-      @Valid @RequestBody ProductCreateDto.Request request,
+      @Valid @RequestBody ProductCreateDto.Request productCreateRequest,
       @JwtToken Long sellerId) {
     log.info("상품 생성 요청");
-    ProductCreateDto.Response newProduct = productService.createProduct(request, sellerId);
+    ProductCreateDto.Response newProduct = productService.createProduct(productCreateRequest,
+        sellerId);
     log.info("상품 생성 성공 - ID: {}", newProduct.getProductId());
     return ResponseEntity.status(CREATED).body(newProduct);
   }
 
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{productId}")
-  public ResponseEntity<ProductDto> getProductById(@PathVariable("productId") Long id) {
-    log.info("상품 정보 조회 요청 - ID: {}", id);
-    ProductDto product = productService.getProductById(id);
+  public ResponseEntity<ProductDto> getProductById(@PathVariable("productId") Long productId) {
+    log.info("상품 정보 조회 요청 - ID: {}", productId);
+    ProductDto product = productService.getProductById(productId);
     return ResponseEntity.ok(product);
   }
 
@@ -59,11 +60,11 @@ public class ProductController {
   public ResponseEntity<Page<ProductDto>> searchProducts(
       @RequestParam(required = false) String name,
       @RequestParam(required = false) Long sellerId,
-      @RequestParam(required = false) ProductStatus status,
+      @RequestParam(required = false) ProductStatus productStatus,
       Pageable pageable) {
     log.info("상품 정보 조회 요청");
 
-    Page<ProductDto> products = getSearchResults(name, sellerId, status, pageable);
+    Page<ProductDto> products = getSearchResults(name, sellerId, productStatus, pageable);
 
     if (products.isEmpty()) {
       log.info("상품 검색 결과 없음");
@@ -73,42 +74,44 @@ public class ProductController {
   }
 
   @GetMapping("/findAll")
-  public ResponseEntity<Page<ProductDto>> getProducts(Pageable pageable) {
+  public ResponseEntity<Page<ProductDto>> getAllProducts(Pageable pageable) {
     log.info("전체 상품 정보 조회 요청");
-    Page<ProductDto> products = productService.getProducts(pageable);
+    Page<ProductDto> products = productService.getAllProducts(pageable);
     return ResponseEntity.ok(products);
   }
 
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PutMapping("/{productId}")
   public ResponseEntity<ProductDto> updateProduct(
-      @PathVariable("productId") Long id,
-      @Valid @RequestBody ProductUpdateDto request,
+      @PathVariable("productId") Long productId,
+      @Valid @RequestBody ProductUpdateDto productUpdateRequest,
       @JwtToken Long sellerId) {
-    log.info("상품 업데이트 요청 - ID: {}", id);
-    ProductDto updatedProduct = productService.updateProduct(id, request, sellerId);
+    log.info("상품 업데이트 요청 - ID: {}", productId);
+    ProductDto updatedProduct = productService.updateProduct(productId, productUpdateRequest,
+        sellerId);
     return ResponseEntity.ok(updatedProduct);
   }
 
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @DeleteMapping("/{productId}")
-  public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long id,
+  public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long productId,
       @JwtToken Long sellerId) {
-    log.info("상품 삭제 요청 - ID: {}", id);
-    productService.deleteProduct(id, sellerId);
+    log.info("상품 삭제 요청 - ID: {}", productId);
+    productService.deleteProduct(productId, sellerId);
     return ResponseEntity.noContent().build();
   }
 
   // 상품 검색 로직을 처리
-  private Page<ProductDto> getSearchResults(String name, Long sellerId, ProductStatus status, Pageable pageable) {
-    if (name != null && !name.isEmpty()) {
-      return productService.getProductByName(name, pageable);
+  private Page<ProductDto> getSearchResults(String ProductStatus, Long sellerId,
+      ProductStatus productStatus, Pageable pageable) {
+    if (ProductStatus != null && !ProductStatus.isEmpty()) {
+      return productService.getProductByName(ProductStatus, pageable);
     }
     if (sellerId != null) {
       return productService.getProductBySellerId(sellerId, pageable);
     }
-    if (status != null) {
-      return productService.getProductByStatus(status, pageable);
+    if (productStatus != null) {
+      return productService.getProductByStatus(productStatus, pageable);
     }
     return Page.empty(); // 조건 없으면 빈 페이지 반환
   }

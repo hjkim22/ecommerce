@@ -37,12 +37,12 @@ public class OrderController {
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @PostMapping
   public ResponseEntity<OrderCreateDto.Response> createOrder(
-      @Valid @RequestBody OrderCreateDto.Request request,
+      @Valid @RequestBody OrderCreateDto.Request orderCreateRequest,
       @JwtToken Long customerId) {
 
     log.info("주문 생성 요청");
-    OrderCreateDto.Response response = orderService.createOrder(customerId, request);
-    log.info("주문 생성 완료 - cart ID: {}", request.getCartId());
+    OrderCreateDto.Response response = orderService.createOrder(customerId, orderCreateRequest);
+    log.info("주문 생성 완료 - cart ID: {}", orderCreateRequest.getCartId());
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
@@ -56,7 +56,7 @@ public class OrderController {
 
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/orders")
-  public ResponseEntity<Page<OrderDto>> getOrderByCustomerId(@RequestParam Long customerId,
+  public ResponseEntity<Page<OrderDto>> getOrdersByCustomerId(@RequestParam Long customerId,
       Pageable pageable) {
     log.info("주문 목록 조회 요청 - 사용자 ID: {}", customerId);
     Page<OrderDto> orders = orderService.getOrdersByCustomerId(customerId, pageable);
@@ -65,7 +65,7 @@ public class OrderController {
 
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/status/{status}")
-  public ResponseEntity<Page<OrderDto>> getOrderByStatus(@PathVariable("status") OrderStatus status,
+  public ResponseEntity<Page<OrderDto>> getOrdersByStatus(@PathVariable("status") OrderStatus status,
       Pageable pageable) {
     log.info("주문 상태별 조회 요청 - 상태: {}", status);
     Page<OrderDto> orders = orderService.getOrderByStatus(status, pageable);
@@ -74,9 +74,9 @@ public class OrderController {
 
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/findAll")
-  public ResponseEntity<Page<OrderDto>> getOrders(Pageable pageable) {
+  public ResponseEntity<Page<OrderDto>> getAllOrders(Pageable pageable) {
     log.info("모든 주문 목록 조회");
-    Page<OrderDto> orders = orderService.getOrders(pageable);
+    Page<OrderDto> orders = orderService.getAllOrders(pageable);
     return ResponseEntity.ok(orders);
   }
 
@@ -95,7 +95,7 @@ public class OrderController {
       @PathVariable("orderId") Long orderId,
       @PathVariable("status") OrderStatus status) {
     log.info("주문 상태 변경 요청 - 주문 ID: {}, 상태: {}", orderId, status);
-    OrderDto orderStatus = orderService.changeOrderStatus(orderId, status);
+    OrderDto orderStatus = orderService.updateOrderStatus(orderId, status);
     return ResponseEntity.ok(orderStatus);
   }
 

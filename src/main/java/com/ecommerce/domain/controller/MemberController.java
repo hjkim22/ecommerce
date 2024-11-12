@@ -98,38 +98,40 @@ public class MemberController {
   // 회원조회 role
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/role")
-  public ResponseEntity<Page<MemberDto>> getMemberByRole(@RequestParam Role role, Pageable pageable) {
+  public ResponseEntity<Page<MemberDto>> getMembersByRole(@RequestParam Role role, Pageable pageable) {
     log.info("회원 정보 조회 요청 - Role: {}", role);
-    Page<MemberDto> members = memberService.getMemberByRole(role, pageable);
+    Page<MemberDto> members = memberService.getMembersByRole(role, pageable);
     return ResponseEntity.ok(members);
   }
 
   // 회원조회 최신순
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/findAll")
-  public ResponseEntity<Page<MemberDto>> getMembers(Pageable pageable) {
+  public ResponseEntity<Page<MemberDto>> getAllMembers(Pageable pageable) {
     log.info("전체 회원 정보 조회 요청 - 최신순");
-    Page<MemberDto> members = memberService.getMembers(pageable);
+    Page<MemberDto> members = memberService.getAllMembers(pageable);
     return ResponseEntity.ok(members);
   }
 
   // 업데이트
   @PreAuthorize(ROLE_ACCESS_CONDITION)
-  @PutMapping("/{memberId}")
+  @PutMapping("/{targetMemberId}")
   public ResponseEntity<MemberDto> updateMember(
-      @PathVariable("memberId") Long memberId,
+      @PathVariable Long targetMemberId,
       @Valid @RequestBody MemberUpdateDto request,
-      @JwtToken Long id) {
-    log.info("회원 정보 업데이트 요청 - ID: {}", memberId);
-    return ResponseEntity.ok(memberService.updateMember(memberId, request, id));
+      @JwtToken Long requestMemberId) {
+    log.info("회원 정보 업데이트 요청 - ID: {}", targetMemberId);
+    return ResponseEntity.ok(memberService.updateMember(targetMemberId, request, requestMemberId));
   }
 
   // 삭제
   @PreAuthorize(ROLE_ACCESS_CONDITION)
-  @DeleteMapping("/{memberId}")
-  public ResponseEntity<Void> deleteMember(@PathVariable Long memberId, @JwtToken Long id) {
-    log.info("회원 삭제 요청 - ID: {}", memberId);
-    memberService.deleteMember(memberId, id);
+  @DeleteMapping("/{targetMemberId}")
+  public ResponseEntity<Void> deleteMember(
+      @PathVariable Long targetMemberId,
+      @JwtToken Long requestMemberId) {
+    log.info("회원 삭제 요청 - ID: {}", targetMemberId);
+    memberService.deleteMember(targetMemberId, requestMemberId);
     return ResponseEntity.noContent().build();
   }
 }
