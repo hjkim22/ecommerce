@@ -54,10 +54,20 @@ public class MemberController {
   @PostMapping("/sign-in")
   public ResponseEntity<SignInDto.Response> signIn(@Valid @RequestBody SignInDto.Request request) {
     log.info("로그인 요청 - 이메일: {}", request.getEmail());
-    SignInDto.Response newMember = memberService.signIn(request); // 로그인 서비스에서 토큰을 포함한 응답 받음
+    SignInDto.Response newMember = memberService.signIn(request);
 
     log.info("로그인 성공 - 이메일: {}", newMember.getEmail());
-    return ResponseEntity.ok(newMember); // 로그인 성공 시 JWT 토큰과 이메일을 포함한 응답 반환
+    return ResponseEntity.ok(newMember);
+  }
+
+  // 로그아웃
+  @PostMapping("/sign-out")
+  public ResponseEntity<String> signOut(@RequestParam Long userId) {
+    log.info("로그아웃 요청 - user ID: {}", userId);
+    memberService.logout(userId);
+
+    log.info("로그아웃 성공 - user ID: {}", userId);
+    return ResponseEntity.ok("로그아웃 성공");
   }
 
   // 인증 메일 전송

@@ -3,6 +3,7 @@ package com.ecommerce.domain.member;
 import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.Role;
 import com.ecommerce.common.exception.CustomException;
+import com.ecommerce.common.repository.RedisCacheRepository;
 import com.ecommerce.common.security.TokenProvider;
 import com.ecommerce.domain.cart.CartService;
 import com.ecommerce.domain.member.dto.MemberDto;
@@ -31,6 +32,7 @@ public class MemberService {
   private final PasswordEncoder passwordEncoder;
   private final TokenProvider tokenProvider;
   private final CartService cartService;
+  private final RedisCacheRepository redisCacheRepository;
 
   /**
    * 회원가입
@@ -68,7 +70,18 @@ public class MemberService {
 
     // 토큰 생성
     String token = tokenProvider.createToken(member.getId(), member.getRole());
+    redisCacheRepository.setData("user:session:" + member.getId(), token, 3600L);
+
     return new SignInDto.Response(token, member.getEmail(), "로그인 성공");
+  }
+
+  /**
+   * 로그아웃
+   *
+   * @param userId 로그아웃할 사용자 ID
+   */
+  public void logout(Long userId) {
+    redisCacheRepository.deleteData("user:session:" + userId); // Redis 에서 세션 삭제
   }
 
   /**
