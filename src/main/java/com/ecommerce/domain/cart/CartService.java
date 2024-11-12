@@ -117,10 +117,11 @@ public class CartService {
    * @param cartId    장바구니 ID
    * @param productId 상품 ID
    */
-  public void removeProductFromCart(Long cartId, Long productId) {
+  public void removeProductFromCart(Long cartId, Long productId, Long customerId) {
     CartEntity cart = findCartById(cartId);
     ProductEntity product = findProductById(productId);
 
+    validateCustomerAuthorization(customerId, cart);
     CartItemEntity cartItem = findCartItemByProduct(cart, product);
 
     if (cartItem == null) {
@@ -136,8 +137,9 @@ public class CartService {
    *
    * @param cartId 장바구니 ID
    */
-  public void clearCart(Long cartId) {
+  public void clearCart(Long cartId, Long customerId) {
     CartEntity cart = findCartById(cartId);
+    validateCustomerAuthorization(customerId, cart);
 
     if (cart.getCartItems().isEmpty()) {
       throw new CustomException(ErrorCode.CART_EMPTY);
@@ -148,6 +150,13 @@ public class CartService {
   }
 
   // ================================= Helper methods ================================= //
+
+  // 사용자 권한 확인 (어드민이 아니고, 고객 ID가 일치하지 않는 경우 예외)
+  private void validateCustomerAuthorization(Long customerId, CartEntity cart) {
+    if (!cart.getCustomer().getId().equals(customerId)) {
+      throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
+    }
+  }
 
   // 장바구니 엔티티 생성
   private CartItemEntity createCartItem(CartEntity cart, ProductEntity product, Integer quantity) {

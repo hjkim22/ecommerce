@@ -73,17 +73,19 @@ public class CartController {
   @DeleteMapping("/{cartId}/items/{productId}")
   public ResponseEntity<Void> deleteCartItem(
       @PathVariable Long cartId,
-      @PathVariable Long productId) {
-    cartService.removeProductFromCart(cartId, productId);
+      @PathVariable Long productId,
+      @JwtToken Long customerId) {
+    cartService.removeProductFromCart(cartId, productId, customerId);
     return ResponseEntity.noContent().build();
   }
 
   // 장바구니 비우기
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @DeleteMapping("/{cartId}")
-  public ResponseEntity<Void> clearCart(@PathVariable("cartId") Long cartId) {
+  public ResponseEntity<Void> clearCart(@PathVariable("cartId") Long cartId,
+      @JwtToken Long customerId) {
     log.info("장바구니 비우기 요청 - 장바구니 ID: {}", cartId);
-    cartService.clearCart(cartId);
+    cartService.clearCart(cartId, customerId);
     return ResponseEntity.noContent().build();
   }
 }
