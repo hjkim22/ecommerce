@@ -70,6 +70,16 @@ public class CartController {
     return ResponseEntity.ok(response);
   }
 
+  // 특정 상품 삭제
+  @PreAuthorize("hasRole('ROLE_CUSTOMER')")
+  @DeleteMapping("/{cartId}/items/{productId}")
+  public ResponseEntity<Void> deleteCartItem(
+      @PathVariable Long cartId,
+      @PathVariable Long productId) {
+    cartService.deleteCartItem(cartId, productId);
+    return ResponseEntity.noContent().build();
+  }
+
   // 비우기
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @DeleteMapping("/{cartId}")

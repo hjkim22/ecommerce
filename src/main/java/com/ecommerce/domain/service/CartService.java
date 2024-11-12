@@ -111,6 +111,21 @@ public class CartService {
     return new AddToCartDto.Response(productId, request.getQuantity(), "수량 수정 완료");
   }
 
+  // 특정 상품 삭제
+  public void deleteCartItem(Long cartId, Long productId) {
+    CartEntity cart = findCartById(cartId);
+    ProductEntity product = findProductById(productId);
+
+    CartItemEntity cartItem = findCartItem(cart, product);
+
+    if (cartItem == null) {
+      throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
+    }
+
+    cart.getCartItems().remove(cartItem);
+    cartRepository.save(cart);
+  }
+
   /**
    * 장바구니 비우기
    * @param cartId 장바구니 ID
