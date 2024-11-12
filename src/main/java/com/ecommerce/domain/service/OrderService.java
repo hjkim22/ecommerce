@@ -160,7 +160,7 @@ public class OrderService {
   // 사용자 권한 확인 (어드민이 아니고, 고객 ID가 일치하지 않는 경우)
   private void validateCustomerAuthorization(Long customerId, OrderEntity order) {
     if (!isAdmin() && !order.getCustomer().getId().equals(customerId)) {
-      throw new CustomException(ErrorCode.UNAUTHORIZED_CUSTOMER);
+      throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
   }
 
@@ -176,7 +176,7 @@ public class OrderService {
         .orElseThrow(() -> new CustomException(ErrorCode.CART_NOT_FOUND));
 
     if (!cart.getCustomer().getId().equals(customerId)) {
-      throw new CustomException(ErrorCode.INVALID_CUSTOMER_ACCESS);
+      throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
     return cart;
   }

@@ -18,7 +18,7 @@ public class SignUpDto {
   @NoArgsConstructor
   public static class Request {
 
-    @NotBlank(message = "이메일을 입력해주세요.")
+    @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "유효한 이메일 주소를 입력해주세요.")
     private String email;
 
@@ -26,13 +26,13 @@ public class SignUpDto {
     @Size(min = 6, max = 20, message = "비밀번호는 최소 {min}자, 최대 {max}자 이어야 합니다.")
     private String password;
 
-    @NotBlank(message = "이름을 입력해주세요..")
+    @NotBlank(message = "이름은 필수입니다.")
     private String name;
 
-    @NotBlank(message = "전화번호를 입력해주세요.")
+    @NotBlank(message = "전화번호는 필수입니다.")
     private String phoneNumber;
 
-    @NotBlank(message = "주소를 입력해주세요.")
+    @NotBlank(message = "주소는 필수입니다.")
     private String address;
 
     @NotNull(message = "\"CUSTOMER\" or \"SELLER\" 를 입력해주세요.")

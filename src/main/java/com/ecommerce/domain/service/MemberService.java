@@ -177,7 +177,7 @@ public class MemberService {
   // 소유자 확인
   private void validateOwnership(Long requestMemberId, Long memberId) {
     if (!isAdmin() && !memberId.equals(requestMemberId)) {
-      throw new CustomException(ErrorCode.INVALID_CUSTOMER_ACCESS);
+      throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
   }
 

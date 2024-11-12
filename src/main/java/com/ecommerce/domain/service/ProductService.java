@@ -138,10 +138,10 @@ public class ProductService {
    */
   private MemberEntity validateSeller(Long sellerId, Long userId) {
     MemberEntity seller = memberRepository.findById(sellerId)
-        .orElseThrow(() -> new CustomException(ErrorCode.SELLER_NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     if (!sellerId.equals(userId)) {
-      throw new CustomException(ErrorCode.INVALID_SELLER_ACCESS);
+      throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
 
     return seller;

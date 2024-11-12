@@ -15,13 +15,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class MemberUpdateDto {
 
-  @NotBlank(message = "이름을 입력해주세요..")
+  @NotBlank(message = "이름은 필수입니다.")
   private String name;
 
-  @NotBlank(message = "전화번호를 입력해주세요.")
+  @NotBlank(message = "전화번호는 필수입니다.")
   @Column(unique = true)
   private String phoneNumber;
 
-  @NotBlank(message = "주소를 입력해주세요.")
+  @NotBlank(message = "주소는 필수입니다.")
   private String address;
 }

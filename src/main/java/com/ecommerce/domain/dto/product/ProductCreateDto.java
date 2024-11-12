@@ -23,7 +23,7 @@ public class ProductCreateDto {
   @AllArgsConstructor
   public static class Request {
 
-    @NotBlank(message = "상품 이름은 필수입니다..")
+    @NotBlank(message = "상품명은 필수입니다..")
     private String productName;
 
     @NotBlank(message = "상품 설명은 필수입니다..")
