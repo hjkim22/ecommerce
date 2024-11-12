@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -126,9 +127,11 @@ public class MemberService {
    * @return 업데이트된 회원 정보 DTO
    */
   @Transactional
-  public MemberDto updateMember(Long id, MemberUpdateDto request) {
+  public MemberDto updateMember(Long id, MemberUpdateDto request, Long memberId) {
     MemberEntity member = memberRepository.findById(id)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    checkOwnership(memberId, id);
 
     if (memberRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), id)) {
       throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
@@ -147,12 +150,28 @@ public class MemberService {
    * @param id 회원 ID
    */
   @Transactional
-  public void deleteMember(Long id) {
+  public void deleteMember(Long id, Long memberId) {
     if (!memberRepository.existsById(id)) {
       throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
+
+    checkOwnership(id, memberId);
+
     memberRepository.deleteById(id);
     log.info("회원 삭제 성공 - ID: {}", id);
+  }
+
+  // 소유자 확인
+  private void checkOwnership(Long requestMemberId, Long memberId) {
+    if (!isAdmin() && !memberId.equals(requestMemberId)) {
+      throw new CustomException(ErrorCode.INVALID_CUSTOMER_ACCESS);
+    }
+  }
+
+  // 어드민 확인
+  private boolean isAdmin() {
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
   }
 
   /**

@@ -33,6 +33,9 @@ public class ProductController {
 
   private final ProductService productService;
 
+  private static final String ROLE_ACCESS_CONDITION =
+      "hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')";
+
   @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
   @PostMapping
   public ResponseEntity<ProductCreateDto.Response> createProduct(
@@ -86,7 +89,7 @@ public class ProductController {
     return ResponseEntity.ok(products);
   }
 
-  @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
+  @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PutMapping("/{productId}")
   public ResponseEntity<ProductDto> updateProduct(
       @PathVariable("productId") Long id,
@@ -97,7 +100,7 @@ public class ProductController {
     return ResponseEntity.ok(updatedProduct);
   }
 
-  @PreAuthorize("hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')")
+  @PreAuthorize(ROLE_ACCESS_CONDITION)
   @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long id,
       @JwtToken Long sellerId) {

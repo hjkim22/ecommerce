@@ -31,6 +31,9 @@ public class OrderController {
 
   private final OrderService orderService;
 
+  private static final String ROLE_ACCESS_CONDITION =
+      "hasRole('ROLE_CUSTOMER') or hasRole('ROLE_ADMIN')";
+
   @PreAuthorize("hasRole('ROLE_CUSTOMER')")
   @PostMapping
   public ResponseEntity<OrderCreateDto.Response> createOrder(
@@ -77,7 +80,7 @@ public class OrderController {
     return ResponseEntity.ok(orders);
   }
 
-  @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CUSTOMER')")
+  @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<OrderDto> cancelOrder(@PathVariable("orderId") Long orderId,
       @JwtToken Long customerId) {
@@ -96,7 +99,7 @@ public class OrderController {
     return ResponseEntity.ok(orderStatus);
   }
 
-  @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CUSTOMER')")
+  @PreAuthorize(ROLE_ACCESS_CONDITION)
   @PatchMapping("/{orderId}/deliveryAddress")
   public ResponseEntity<OrderDto> updateDeliveryAddress(
       @PathVariable("orderId") Long orderId,

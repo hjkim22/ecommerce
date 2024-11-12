@@ -3,6 +3,7 @@ package com.ecommerce.domain.controller;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import com.ecommerce.common.enums.Role;
+import com.ecommerce.common.security.JwtToken;
 import com.ecommerce.domain.dto.email.EmailVerificationDto;
 import com.ecommerce.domain.dto.email.EmailVerificationRequestDto;
 import com.ecommerce.domain.dto.member.MemberDto;
@@ -38,9 +39,7 @@ public class MemberController {
   private final EmailService emailService;
 
   private static final String ROLE_ACCESS_CONDITION =
-      "hasRole('ROLE_ADMIN') or " +
-          "(hasRole('ROLE_CUSTOMER') and #memberId == T(java.lang.Long).parseLong(principal.username)) or " +
-          "(hasRole('ROLE_SELLER') and #memberId == T(java.lang.Long).parseLong(principal.username))";
+      "hasRole('ROLE_CUSTOMER') or hasRole('ROLE_SELLER') or hasRole('ROLE_ADMIN')";
 
   // 회원가입
   @PostMapping("/sign-up")
@@ -118,17 +117,18 @@ public class MemberController {
   @PutMapping("/{memberId}")
   public ResponseEntity<MemberDto> updateMember(
       @PathVariable("memberId") Long memberId,
-      @Valid @RequestBody MemberUpdateDto request) {
+      @Valid @RequestBody MemberUpdateDto request,
+      @JwtToken Long id) {
     log.info("회원 정보 업데이트 요청 - ID: {}", memberId);
-    return ResponseEntity.ok(memberService.updateMember(memberId, request));
+    return ResponseEntity.ok(memberService.updateMember(memberId, request, id));
   }
 
   // 삭제
   @PreAuthorize(ROLE_ACCESS_CONDITION)
   @DeleteMapping("/{memberId}")
-  public ResponseEntity<Void> deleteMember(@PathVariable Long memberId) {
+  public ResponseEntity<Void> deleteMember(@PathVariable Long memberId, @JwtToken Long id) {
     log.info("회원 삭제 요청 - ID: {}", memberId);
-    memberService.deleteMember(memberId);
+    memberService.deleteMember(memberId, id);
     return ResponseEntity.noContent().build();
   }
 }
