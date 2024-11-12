@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -97,7 +98,7 @@ public class MemberController {
   // 회원조회 role
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/role")
-  public ResponseEntity<Page<MemberDto>> getMemberByRole(Role role, Pageable pageable) {
+  public ResponseEntity<Page<MemberDto>> getMemberByRole(@RequestParam Role role, Pageable pageable) {
     log.info("회원 정보 조회 요청 - Role: {}", role);
     Page<MemberDto> members = memberService.getMemberByRole(role, pageable);
     return ResponseEntity.ok(members);
