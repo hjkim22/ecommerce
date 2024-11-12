@@ -61,7 +61,7 @@ public class MemberController {
   }
 
   // 인증 메일 전송
-  @PostMapping("/verification-code/send")
+  @PostMapping("/verify-email/send")
   public ResponseEntity<Void> sendEmail(@RequestBody @Valid EmailVerificationRequestDto request)
       throws MessagingException {
     log.info("인증 메일 전송 요청 - 이메일: {}", request.email());
@@ -71,7 +71,7 @@ public class MemberController {
   }
 
   // 인증번호 확인
-  @PostMapping("/verification-code/verify")
+  @PostMapping("/verify-email/verify")
   public ResponseEntity<Void> verifyEmailCode(@RequestBody @Valid EmailVerificationDto request) {
     log.info("인증번호 확인 요청 - 인증 코드: {}", request.getVerificationCode());
     emailService.validateVerificationCode(request);
@@ -106,7 +106,7 @@ public class MemberController {
 
   // 회원조회 최신순
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @GetMapping("/findAll")
+  @GetMapping
   public ResponseEntity<Page<MemberDto>> getAllMembers(Pageable pageable) {
     log.info("전체 회원 정보 조회 요청 - 최신순");
     Page<MemberDto> members = memberService.getAllMembers(pageable);
@@ -115,23 +115,23 @@ public class MemberController {
 
   // 업데이트
   @PreAuthorize(ROLE_ACCESS_CONDITION)
-  @PutMapping("/{targetMemberId}")
+  @PutMapping("/{memberId}")
   public ResponseEntity<MemberDto> updateMember(
-      @PathVariable Long targetMemberId,
+      @PathVariable Long memberId,
       @Valid @RequestBody MemberUpdateDto request,
       @JwtToken Long requestMemberId) {
-    log.info("회원 정보 업데이트 요청 - ID: {}", targetMemberId);
-    return ResponseEntity.ok(memberService.updateMember(targetMemberId, request, requestMemberId));
+    log.info("회원 정보 업데이트 요청 - ID: {}", memberId);
+    return ResponseEntity.ok(memberService.updateMember(memberId, request, requestMemberId));
   }
 
   // 삭제
   @PreAuthorize(ROLE_ACCESS_CONDITION)
-  @DeleteMapping("/{targetMemberId}")
+  @DeleteMapping("/{memberId}")
   public ResponseEntity<Void> deleteMember(
-      @PathVariable Long targetMemberId,
+      @PathVariable Long memberId,
       @JwtToken Long requestMemberId) {
-    log.info("회원 삭제 요청 - ID: {}", targetMemberId);
-    memberService.deleteMember(targetMemberId, requestMemberId);
+    log.info("회원 삭제 요청 - ID: {}", memberId);
+    memberService.deleteMember(memberId, requestMemberId);
     return ResponseEntity.noContent().build();
   }
 }

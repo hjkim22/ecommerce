@@ -55,7 +55,7 @@ public class OrderController {
   }
 
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @GetMapping("/orders")
+  @GetMapping("/customer")
   public ResponseEntity<Page<OrderDto>> getOrdersByCustomerId(@RequestParam Long customerId,
       Pageable pageable) {
     log.info("주문 목록 조회 요청 - 사용자 ID: {}", customerId);
@@ -73,7 +73,7 @@ public class OrderController {
   }
 
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @GetMapping("/findAll")
+  @GetMapping
   public ResponseEntity<Page<OrderDto>> getAllOrders(Pageable pageable) {
     log.info("모든 주문 목록 조회");
     Page<OrderDto> orders = orderService.getAllOrders(pageable);
@@ -90,17 +90,17 @@ public class OrderController {
   }
 
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @PatchMapping("/{orderId}/status/{status}")
+  @PatchMapping("/{orderId}/status")
   public ResponseEntity<OrderDto> changeOrderStatus(
       @PathVariable("orderId") Long orderId,
-      @PathVariable("status") OrderStatus status) {
+      @RequestParam("status") OrderStatus status) {
     log.info("주문 상태 변경 요청 - 주문 ID: {}, 상태: {}", orderId, status);
     OrderDto orderStatus = orderService.updateOrderStatus(orderId, status);
     return ResponseEntity.ok(orderStatus);
   }
 
   @PreAuthorize(ROLE_ACCESS_CONDITION)
-  @PatchMapping("/{orderId}/deliveryAddress")
+  @PatchMapping("/{orderId}/delivery-address")
   public ResponseEntity<OrderDto> updateDeliveryAddress(
       @PathVariable("orderId") Long orderId,
       @Valid @RequestBody OrderUpdateDto orderUpdateDto,

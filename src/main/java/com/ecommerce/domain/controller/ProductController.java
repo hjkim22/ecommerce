@@ -73,7 +73,7 @@ public class ProductController {
     return ResponseEntity.ok(products);
   }
 
-  @GetMapping("/findAll")
+  @GetMapping
   public ResponseEntity<Page<ProductDto>> getAllProducts(Pageable pageable) {
     log.info("전체 상품 정보 조회 요청");
     Page<ProductDto> products = productService.getAllProducts(pageable);
