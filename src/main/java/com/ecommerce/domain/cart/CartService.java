@@ -10,6 +10,7 @@ import com.ecommerce.domain.member.MemberEntity;
 import com.ecommerce.domain.member.MemberRepository;
 import com.ecommerce.domain.product.ProductEntity;
 import com.ecommerce.domain.product.ProductRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,12 +50,13 @@ public class CartService {
     validateProductStatus(product);
     validateProductQuantity(product, request.getQuantity());
 
-    CartItemEntity existingCartItem = findCartItemByProduct(cart, product);
+    Optional<CartItemEntity> existingCartItem = findCartItemByProduct(cart, product);
 
-    if (existingCartItem != null) {
-      int updatedQuantity = existingCartItem.getQuantity() + request.getQuantity();
+    if (existingCartItem.isPresent()) {
+      CartItemEntity item = existingCartItem.get();
+      int updatedQuantity = item.getQuantity() + request.getQuantity();
       validateProductQuantity(product, updatedQuantity);
-      existingCartItem.setQuantity(updatedQuantity);
+      item.setQuantity(updatedQuantity);
     } else {
       CartItemEntity newCartItem = createCartItem(cart, product, request.getQuantity());
       cart.getCartItems().add(newCartItem);
@@ -105,7 +107,8 @@ public class CartService {
 
     validateProductQuantity(product, request.getQuantity());
 
-    CartItemEntity existingCartItem = findCartItemByProduct(cart, product);
+    CartItemEntity existingCartItem = findCartItemByProduct(cart, product)
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
     existingCartItem.setQuantity(request.getQuantity());
 
     return new AddToCartDto.Response(productId, request.getQuantity(), "수량 수정 완료");
@@ -122,7 +125,8 @@ public class CartService {
     ProductEntity product = findProductById(productId);
 
     validateCustomerAuthorization(customerId, cart);
-    CartItemEntity cartItem = findCartItemByProduct(cart, product);
+    CartItemEntity cartItem = findCartItemByProduct(cart, product)
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
     if (cartItem == null) {
       throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
@@ -203,10 +207,9 @@ public class CartService {
   }
 
   // 장바구니에서 해당 아이템 조회, 없을 경우 null
-  private CartItemEntity findCartItemByProduct(CartEntity cart, ProductEntity product) {
+  private Optional<CartItemEntity> findCartItemByProduct(CartEntity cart, ProductEntity product) {
     return cart.getCartItems().stream()
         .filter(item -> item.getProduct().getId().equals(product.getId()))
-        .findFirst()
-        .orElse(null);
+        .findFirst();
   }
 }
