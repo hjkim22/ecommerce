@@ -77,6 +77,7 @@
 ---
 
 ## ERD
-![ecommerce](https://github.com/user-attachments/assets/0a3c51a0-cda8-4f4b-9106-c997a2deeeb2)
+
+![ecommerce](https://github.com/user-attachments/assets/c9a17efe-5b0c-44e7-a58e-22be51a64e9d)
 
 ---
