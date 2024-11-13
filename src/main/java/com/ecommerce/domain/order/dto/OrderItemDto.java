@@ -1,6 +1,6 @@
 package com.ecommerce.domain.order.dto;
 
-import com.ecommerce.domain.order.OrderItemEntity;
+import com.ecommerce.domain.order.OrderItem;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +20,7 @@ public class OrderItemDto {
   private Integer quantity;
   private BigDecimal price;
 
-  public static OrderItemDto fromEntity(OrderItemEntity orderItemEntity) {
+  public static OrderItemDto fromEntity(OrderItem orderItemEntity) {
     return OrderItemDto.builder()
         .orderItemId(orderItemEntity.getId())
         .productId(orderItemEntity.getProduct().getId())

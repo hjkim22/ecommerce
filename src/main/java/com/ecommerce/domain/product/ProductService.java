@@ -4,7 +4,7 @@ import com.ecommerce.common.enums.ErrorCode;
 import com.ecommerce.common.enums.ProductStatus;
 import com.ecommerce.common.enums.Role;
 import com.ecommerce.common.exception.CustomException;
-import com.ecommerce.domain.member.MemberEntity;
+import com.ecommerce.domain.member.Member;
 import com.ecommerce.domain.member.MemberRepository;
 import com.ecommerce.domain.product.dto.ProductCreateDto;
 import com.ecommerce.domain.product.dto.ProductCreateDto.Request;
@@ -34,8 +34,8 @@ public class ProductService {
    * @return 상품 생성 응답 데이터
    */
   public ProductCreateDto.Response createProduct(ProductCreateDto.Request request, Long sellerId) {
-    MemberEntity seller = validateSeller(request.getSellerId(), sellerId);
-    ProductEntity product = buildProductEntity(request, seller);
+    Member seller = validateSeller(request.getSellerId(), sellerId);
+    Product product = buildProductEntity(request, seller);
 
     return new ProductCreateDto.Response(product.getId(), "상품 등록 완료");
   }
@@ -47,7 +47,7 @@ public class ProductService {
    * @return 상품 DTO
    */
   public ProductDto getProductById(Long productId) {
-    ProductEntity product = findProductById(productId);
+    Product product = findProductById(productId);
     return ProductDto.fromEntity(product);
   }
 
@@ -95,7 +95,7 @@ public class ProductService {
   public Page<ProductDto> getAllProducts(Pageable pageable) {
     Pageable sortedByCreatedAtDesc = PageRequest.of(
         pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
-    Page<ProductEntity> products = productRepository.findAll(sortedByCreatedAtDesc);
+    Page<Product> products = productRepository.findAll(sortedByCreatedAtDesc);
     return products.map(ProductDto::fromEntity);
   }
 
@@ -109,7 +109,7 @@ public class ProductService {
    */
   @Transactional
   public ProductDto updateProduct(Long productId, ProductUpdateDto request, Long sellerId) {
-    ProductEntity product = validateProductAndAccess(productId, sellerId);
+    Product product = validateProductAndAccess(productId, sellerId);
     updateProductFields(request, product);
 
     return ProductDto.fromEntity(product);
@@ -123,26 +123,26 @@ public class ProductService {
    */
   @Transactional
   public void deleteProduct(Long productId, Long sellerId) {
-    ProductEntity product = validateProductAndAccess(productId, sellerId);
+    Product product = validateProductAndAccess(productId, sellerId);
     product.setStatus(ProductStatus.DELETED);
   }
 
   // ================================= Helper methods ================================= //
 
   // 상품 ID로 상품을 조회
-  private ProductEntity findProductById(Long productId) {
+  private Product findProductById(Long productId) {
     return productRepository.findById(productId)
         .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
   }
 
   // 상품 엔티티 페이지 형태 DTO 로 변환
-  private Page<ProductDto> getProductPage(Page<ProductEntity> products) {
+  private Page<ProductDto> getProductPage(Page<Product> products) {
     return products.map(ProductDto::fromEntity);
   }
 
   // 판매자 검증
-  private MemberEntity validateSeller(Long sellerId, Long requestSellerId) {
-    MemberEntity seller = memberRepository.findById(sellerId)
+  private Member validateSeller(Long sellerId, Long requestSellerId) {
+    Member seller = memberRepository.findById(sellerId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     if (!sellerId.equals(requestSellerId)) {
@@ -152,8 +152,8 @@ public class ProductService {
   }
 
   // 상품 접근 권한 검증
-  private ProductEntity validateProductAndAccess(Long productId, Long sellerId) {
-    ProductEntity product = findProductById(productId);
+  private Product validateProductAndAccess(Long productId, Long sellerId) {
+    Product product = findProductById(productId);
     if (!isAdmin() && !product.getSeller().getId().equals(sellerId)) {
       throw new CustomException(ErrorCode.INVALID_AUTH_TOKEN);
     }
@@ -167,8 +167,8 @@ public class ProductService {
   }
 
   // 상품 엔티티 생성
-  private ProductEntity buildProductEntity(Request request, MemberEntity seller) {
-    return productRepository.save(ProductEntity.builder()
+  private Product buildProductEntity(Request request, Member seller) {
+    return productRepository.save(Product.builder()
         .productName(request.getProductName())
         .description(request.getDescription())
         .price(request.getPrice())
@@ -180,7 +180,7 @@ public class ProductService {
   }
 
   // 상품 필드 업데이트
-  private void updateProductFields(ProductUpdateDto request, ProductEntity product) {
+  private void updateProductFields(ProductUpdateDto request, Product product) {
     if (request.getProductName() != null) {
       product.setProductName(request.getProductName());
     }

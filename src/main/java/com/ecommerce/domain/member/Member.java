@@ -2,8 +2,8 @@ package com.ecommerce.domain.member;
 
 import com.ecommerce.common.entity.BaseTimeEntity;
 import com.ecommerce.common.enums.Role;
-import com.ecommerce.domain.cart.CartEntity;
-import com.ecommerce.domain.product.ProductEntity;
+import com.ecommerce.domain.cart.Cart;
+import com.ecommerce.domain.product.Product;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,7 +34,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MemberEntity extends BaseTimeEntity implements UserDetails {
+public class Member extends BaseTimeEntity implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,10 +63,10 @@ public class MemberEntity extends BaseTimeEntity implements UserDetails {
   private Role role;
 
   @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<ProductEntity> products;
+  private List<Product> products;
 
   @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private CartEntity cart;
+  private Cart cart;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

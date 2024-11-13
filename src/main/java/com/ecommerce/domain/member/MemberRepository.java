@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long> {
 
-  Optional<MemberEntity> findByEmail(String email);
+  Optional<Member> findByEmail(String email);
 
   boolean existsByEmail(String email);
 
@@ -18,5 +18,5 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
 
   boolean existsByPhoneNumberAndIdNot(String phone, Long id);
 
-  Page<MemberEntity> findMemberByRole(Role role, Pageable pageable);
+  Page<Member> findMemberByRole(Role role, Pageable pageable);
 }

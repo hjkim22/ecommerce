@@ -2,7 +2,7 @@ package com.ecommerce.domain.product;
 
 import com.ecommerce.common.entity.BaseTimeEntity;
 import com.ecommerce.common.enums.ProductStatus;
-import com.ecommerce.domain.member.MemberEntity;
+import com.ecommerce.domain.member.Member;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -25,7 +25,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductEntity extends BaseTimeEntity {
+public class Product extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,7 @@ public class ProductEntity extends BaseTimeEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "member_id", nullable = false)
-  private MemberEntity seller;
+  private Member seller;
 
   @Enumerated(EnumType.STRING)
   private ProductStatus status;

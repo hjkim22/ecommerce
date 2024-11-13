@@ -1,6 +1,6 @@
 package com.ecommerce.domain.cart.dto;
 
-import com.ecommerce.domain.cart.CartItemEntity;
+import com.ecommerce.domain.cart.CartItem;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +20,7 @@ public class CartItemDto {
   private Integer quantity;
   private BigDecimal productPrice;
 
-  public static CartItemDto fromEntity(CartItemEntity cartItemEntity) {
+  public static CartItemDto fromEntity(CartItem cartItemEntity) {
     return CartItemDto.builder()
         .cartItemId(cartItemEntity.getId())
         .productId(cartItemEntity.getProduct().getId())

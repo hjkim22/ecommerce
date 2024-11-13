@@ -1,7 +1,7 @@
 package com.ecommerce.domain.cart.dto;
 
 
-import com.ecommerce.domain.cart.CartEntity;
+import com.ecommerce.domain.cart.Cart;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,7 +23,7 @@ public class CartDto {
   private List<CartItemDto> cartItems;
   private BigDecimal totalPrice;
 
-  public static CartDto fromEntity(CartEntity cartEntity) {
+  public static CartDto fromEntity(Cart cartEntity) {
     return CartDto.builder()
         .cartId(cartEntity.getId())
         .customerId(cartEntity.getCustomer().getId())

@@ -2,8 +2,8 @@ package com.ecommerce.domain.order;
 
 import com.ecommerce.common.entity.BaseTimeEntity;
 import com.ecommerce.common.enums.OrderStatus;
-import com.ecommerce.domain.cart.CartEntity;
-import com.ecommerce.domain.member.MemberEntity;
+import com.ecommerce.domain.cart.Cart;
+import com.ecommerce.domain.member.Member;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,7 +30,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderEntity extends BaseTimeEntity {
+public class Order extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,7 @@ public class OrderEntity extends BaseTimeEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "member_id", nullable = false)
-  private MemberEntity customer;
+  private Member customer;
 
   @Enumerated(EnumType.STRING)
   private OrderStatus status;
@@ -47,17 +47,17 @@ public class OrderEntity extends BaseTimeEntity {
   private BigDecimal totalPrice;
 
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<OrderItemEntity> orderItems = new ArrayList<>();
+  private List<OrderItem> orderItems = new ArrayList<>();
 
   @ManyToOne(fetch = FetchType.LAZY) // 1개의 장바구니와 1:1
   @JoinColumn(name = "cart_id", nullable = false)
-  private CartEntity cart;
+  private Cart cart;
 
-  public void addOrderItems(List<OrderItemEntity> orderItems) {
+  public void addOrderItems(List<OrderItem> orderItems) {
     this.orderItems = new ArrayList<>(orderItems);
     BigDecimal calculatedTotalPrice = BigDecimal.ZERO;
     // 총 가격 계산
-    for (OrderItemEntity orderItem : orderItems) {
+    for (OrderItem orderItem : orderItems) {
       orderItem.setOrder(this);
       calculatedTotalPrice = calculatedTotalPrice.add(
           orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));

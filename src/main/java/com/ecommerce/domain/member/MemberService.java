@@ -45,7 +45,7 @@ public class MemberService {
     validateMemberExists(request.getEmail(), request.getPhoneNumber());
 
     String encodedPassword = passwordEncoder.encode(request.getPassword());
-    MemberEntity savedMember = createMember(request, encodedPassword);
+    Member savedMember = createMember(request, encodedPassword);
 
     // CUSTOMER 인 경우만 장바구니 생성
     if (savedMember.getRole() == Role.CUSTOMER) {
@@ -62,7 +62,7 @@ public class MemberService {
    * @return 로그인 성공 DTO
    */
   public SignInDto.Response signIn(SignInDto.Request request) {
-    MemberEntity member = findMemberByEmail(request.getEmail());
+    Member member = findMemberByEmail(request.getEmail());
 
     if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
       throw new CustomException(ErrorCode.INVALID_PASSWORD);
@@ -91,7 +91,7 @@ public class MemberService {
    * @return 회원 정보 DTO
    */
   public MemberDto getMemberById(Long memberId) {
-    MemberEntity member = findMemberById(memberId);
+    Member member = findMemberById(memberId);
     return MemberDto.fromEntity(member);
   }
 
@@ -102,7 +102,7 @@ public class MemberService {
    * @return 회원 정보 DTO
    */
   public MemberDto getMemberByEmail(String email) {
-    MemberEntity member = findMemberByEmail(email);
+    Member member = findMemberByEmail(email);
     return MemberDto.fromEntity(member);
   }
 
@@ -114,7 +114,7 @@ public class MemberService {
    * @return 역할별 회원 목록
    */
   public Page<MemberDto> getMembersByRole(Role role, Pageable pageable) {
-    Page<MemberEntity> members = memberRepository.findMemberByRole(role, pageable);
+    Page<Member> members = memberRepository.findMemberByRole(role, pageable);
     return members.map(MemberDto::fromEntity);
   }
 
@@ -127,7 +127,7 @@ public class MemberService {
   public Page<MemberDto> getAllMembers(Pageable pageable) {
     Pageable sortedByCreatedAtDesc = PageRequest.of(
         pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Order.desc("createdAt")));
-    Page<MemberEntity> members = memberRepository.findAll(sortedByCreatedAtDesc);
+    Page<Member> members = memberRepository.findAll(sortedByCreatedAtDesc);
 
     return members.map(MemberDto::fromEntity);
   }
@@ -143,7 +143,7 @@ public class MemberService {
   @Transactional
   public MemberDto updateMember(Long targetMemberId, MemberUpdateDto request,
       Long requestMemberId) {
-    MemberEntity member = findMemberById(targetMemberId);
+    Member member = findMemberById(targetMemberId);
     validateOwnership(requestMemberId, targetMemberId);
 
     if (memberRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), targetMemberId)) {
@@ -186,13 +186,13 @@ public class MemberService {
   }
 
   // 이메일로 회원 조회
-  private MemberEntity findMemberByEmail(String email) {
+  private Member findMemberByEmail(String email) {
     return memberRepository.findByEmail(email)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
 
   // ID로 회원 조회
-  private MemberEntity findMemberById(Long memberId) {
+  private Member findMemberById(Long memberId) {
     return memberRepository.findById(memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
   }
@@ -211,8 +211,8 @@ public class MemberService {
   }
 
   // 회원 엔티티 생성
-  private MemberEntity createMember(Request request, String encodedPassword) {
-    return memberRepository.save(MemberEntity.builder()
+  private Member createMember(Request request, String encodedPassword) {
+    return memberRepository.save(Member.builder()
         .email(request.getEmail().toLowerCase(Locale.ROOT))
         .password(encodedPassword)
         .name(request.getName())

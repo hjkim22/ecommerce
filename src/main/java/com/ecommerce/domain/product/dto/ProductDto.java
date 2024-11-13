@@ -1,7 +1,7 @@
 package com.ecommerce.domain.product.dto;
 
 import com.ecommerce.common.enums.ProductStatus;
-import com.ecommerce.domain.product.ProductEntity;
+import com.ecommerce.domain.product.Product;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +24,7 @@ public class ProductDto {
   private Long sellerId;
   private ProductStatus status;
 
-  public static ProductDto fromEntity(ProductEntity productEntity) {
+  public static ProductDto fromEntity(Product productEntity) {
     return ProductDto.builder()
         .id(productEntity.getId())
         .productName(productEntity.getProductName())
