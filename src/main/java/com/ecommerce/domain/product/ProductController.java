@@ -107,17 +107,17 @@ public class ProductController {
   }
 
   // 상품 검색 로직 처리
-  private Page<ProductDto> getSearchResults(String ProductStatus, Long sellerId,
+  private Page<ProductDto> getSearchResults(String name, Long sellerId,
       ProductStatus productStatus, Pageable pageable) {
-    if (ProductStatus != null && !ProductStatus.isEmpty()) {
-      return productService.getProductByName(ProductStatus, pageable);
+    if ((name == null || name.isEmpty()) && sellerId == null && productStatus == null) {
+      return productService.getAllProducts(pageable);
+    }
+    if (name != null && !name.isEmpty()) {
+      return productService.getProductByName(name, pageable);
     }
     if (sellerId != null) {
       return productService.getProductBySellerId(sellerId, pageable);
     }
-    if (productStatus != null) {
-      return productService.getProductByStatus(productStatus, pageable);
-    }
-    return Page.empty(); // 조건 없으면 빈 페이지 반환
+    return productService.getProductByStatus(productStatus, pageable);
   }
 }
