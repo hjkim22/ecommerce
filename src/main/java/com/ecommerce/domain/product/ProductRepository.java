@@ -7,11 +7,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long> {
 
-  Page<ProductEntity> findByProductNameContaining(String name, Pageable pageable);
+  Page<Product> findByProductNameContaining(String name, Pageable pageable);
 
-  Page<ProductEntity> findBySellerId(Long sellerId, Pageable pageable);
+  Page<Product> findBySellerId(Long sellerId, Pageable pageable);
 
-  Page<ProductEntity> findByStatus(ProductStatus status, Pageable pageable);
+  Page<Product> findByStatus(ProductStatus status, Pageable pageable);
 }

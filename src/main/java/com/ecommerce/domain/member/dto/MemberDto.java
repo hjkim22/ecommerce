@@ -1,7 +1,7 @@
 package com.ecommerce.domain.member.dto;
 
 import com.ecommerce.common.enums.Role;
-import com.ecommerce.domain.member.MemberEntity;
+import com.ecommerce.domain.member.Member;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,7 +22,7 @@ public class MemberDto {
   private String address;
   private Role role;
 
-  public static MemberDto fromEntity(MemberEntity memberEntity) {
+  public static MemberDto fromEntity(Member memberEntity) {
     return MemberDto.builder()
         .id(memberEntity.getId())
         .email(memberEntity.getEmail())

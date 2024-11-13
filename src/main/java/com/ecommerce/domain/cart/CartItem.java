@@ -1,6 +1,7 @@
-package com.ecommerce.domain.order;
+package com.ecommerce.domain.cart;
 
-import com.ecommerce.domain.product.ProductEntity;
+import com.ecommerce.common.entity.BaseTimeEntity;
+import com.ecommerce.domain.product.Product;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -8,7 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.math.BigDecimal;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,20 +22,20 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItemEntity {
+public class CartItem extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "order_id", nullable = false)
-  private OrderEntity order;
+  @JoinColumn(name = "cart_id", nullable = false)
+  private Cart cart;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_id", nullable = false)
-  private ProductEntity product;
+  private Product product;
 
+  @Min(1)
   private Integer quantity;
-  private BigDecimal price;
 }
