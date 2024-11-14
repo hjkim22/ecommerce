@@ -1,20 +1,20 @@
 spring:
-  config:
-    import: optional:file:.env[.properties]
+#  config:
+#    import: optional:file:.env[.properties]
 
   application:
     name: ecommerce
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:${MYSQL_PORT}/ecommerce
+    url: ${SPRING_DATASOURCE_URL}
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
     web:
       pageable:
         default-page-size: 10
@@ -22,7 +22,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update # 배포 할때 validate / none 변경 예정
+      ddl-auto: none # 배포 할때 validate / none 변경 예정
     show-sql: true
     database: mysql
 
